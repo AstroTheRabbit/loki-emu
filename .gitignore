@@ -1,3 +1,6 @@
 /target
 /.vscode
 /research
+/roms
+
+**.DS_Store

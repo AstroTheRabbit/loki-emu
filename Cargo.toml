@@ -1,5 +1,5 @@
 [package]
-name = "hermes-nds"
+name = "loki-emu"
 version = "0.1.0"
 edition = "2021"
 
