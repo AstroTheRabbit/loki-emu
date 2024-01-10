@@ -1,5 +1,7 @@
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, TryFromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub enum Instruction {
     // * 0x0_

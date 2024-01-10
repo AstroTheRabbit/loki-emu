@@ -1,5 +1,6 @@
 use super::cartridge::CartridgeHeader;
 
+#[derive(Debug)]
 pub struct Bus {
     pub cartridge: CartridgeHeader,
 }

@@ -3,6 +3,7 @@ pub mod gb;
 pub mod byte_field;
 
 use gb::cartridge::CartridgeHeader;
+use num_enum::TryFromPrimitive;
 use softbuffer::{Context, Surface};
 use std::{num::NonZeroU32, rc::Rc};
 use winit::{
@@ -11,6 +12,8 @@ use winit::{
     window::WindowBuilder,
 };
 use winit_input_helper::WinitInputHelper;
+
+use crate::gb::utils::split_u16;
 
 // fn main() -> Result<(), EventLoopError> {
 //     let event_loop = EventLoop::new().expect("Unable to create window!");
@@ -66,5 +69,10 @@ use winit_input_helper::WinitInputHelper;
 // }
 
 fn main() {
-    let cartridge = CartridgeHeader::load_from_file("./roms/Tetris.gb").unwrap();
+    let cartridge = CartridgeHeader::load_from_file("./roms/Pokémon Red Version.gb").unwrap();
+    println!("{:X?}", cartridge);
+
+    for b in cartridge.entry_point {
+        dbg!(self::gb::instructions::Instruction::try_from_primitive(b));
+    }
 }
