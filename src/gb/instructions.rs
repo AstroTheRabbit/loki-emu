@@ -19,7 +19,7 @@ pub enum Instruction {
     DEC_B,
     /// Load the immediate value `n8` into register `B`.
     LD_B_n8,
-    /// Rotate register `A` left, setting the carry flag to the new MSB.
+    /// Rotate register `A` left, setting the carry flag to the bit shifted out of the byte.
     RLCA,
     /// Load the value of register `SP` into the immediate address `a16`.
     LD_a16_SP,
@@ -35,12 +35,12 @@ pub enum Instruction {
     DEC_C,
     /// Load immediate value `n8` into register `C`.
     LD_C_n8,
-    /// Rotate register `A` right, setting the carry flag to the new LSB.
+    /// Rotate register `A` right, setting the carry flag to the bit shifted out of the byte.
     RRCA,
 
     // * 0x1_
-    /// Stop the CPU & LCD display until a button is pressed (`n8` is any byte, usually `0x00`).
-    STOP_n8,
+    /// Stop the CPU & LCD display until a button is pressed (the byte after is also skipped).
+    STOP,
     /// Load the immediate value `n16` into register pair `DE`.
     LD_DE_n16,
     /// Load the value of `A` into the location of address `DE`.
@@ -53,7 +53,7 @@ pub enum Instruction {
     DEC_D,
     /// Load the immediate value `n8` into register `D`.
     LD_D_n8,
-    /// Rotate register `A` left through the carry flag.
+    /// Rotate register `A` left with the carry flag.
     RLA,
     /// Add the signed immediate value `e8` to the `PC` and jump to it.
     JR_e8,
@@ -69,7 +69,7 @@ pub enum Instruction {
     DEC_E,
     /// Load the immediate value `n8` into register `E`.
     LD_E_n8,
-    /// Rotate register `A` right through the carry flag.
+    /// Rotate register `A` right with the carry flag.
     RRA,
 
     // * 0x2_

@@ -2,7 +2,7 @@ use std::ops::BitOr;
 
 use num_enum::IntoPrimitive;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Register {
     A,
     F,
@@ -14,7 +14,7 @@ pub enum Register {
     L,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum RegisterPair {
     AF,
     BC,
@@ -24,7 +24,7 @@ pub enum RegisterPair {
     SP,
 }
 
-#[derive(Debug, IntoPrimitive)]
+#[derive(Debug, Clone, Copy, IntoPrimitive)]
 #[repr(u8)]
 pub enum Flag {
     /// Zero flag
@@ -53,6 +53,20 @@ impl BitOr<u8> for Flag {
     }
 }
 
+impl BitOr<Flag> for u8 {
+    type Output = u8;
+
+    fn bitor(self, rhs: Flag) -> Self::Output {
+        self | u8::from(rhs)
+    }
+}
+
+/// Returns true if any of the bits of `mask` in `v` are true.
+#[inline]
+pub fn get_bit<M: Into<u8>>(v: &u8, mask: M) -> bool {
+    *v & mask.into() != 0
+}
+
 /// Sets all bits of `v` in the `mask` to `state`.
 #[inline]
 pub fn set_bit<M: Into<u8>>(v: &mut u8, mask: M, state: bool) {
@@ -63,18 +77,18 @@ pub fn set_bit<M: Into<u8>>(v: &mut u8, mask: M, state: bool) {
     }
 }
 
-/// Returns true if any of the bits of `mask` in `v` are true.
 #[inline]
-pub fn get_bit<M: Into<u8>>(v: &u8, mask: M) -> bool {
-    *v & mask.into() != 0
+pub fn toggle_bit<M: Into<u8>>(v: &mut u8, mask: M) {
+    *v ^= mask.into();
 }
 
+/// Returns (LSB, MSB).
 #[inline]
 pub fn split_u16(v: u16) -> (u8, u8) {
-    ((v >> 8) as u8, v as u8)
+    (v as u8, (v >> 8) as u8)
 }
 
 #[inline]
-pub fn join_u16(high: u8, low: u8) -> u16 {
-    (high as u16) << 8 | (low as u16)
+pub fn join_u16(lsb: u8, msb: u8) -> u16 {
+    (msb as u16) << 8 | (lsb as u16)
 }
