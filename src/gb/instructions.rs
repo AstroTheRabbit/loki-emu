@@ -137,7 +137,7 @@ pub enum Instruction {
     DEC_A,
     /// Load the immediate value `n8` into register `A`.
     LD_A_n8,
-    /// Complement (invert) the carry flag.
+    /// Invert the carry flag.
     CCF,
 
     // * 0x4_
@@ -255,7 +255,7 @@ pub enum Instruction {
     LD_HL_H,
     /// Load register `L` into the location of address `HL`.
     LD_HL_L,
-    /// Power down CPU until an interrupt occurs.
+    /// Power down the CPU until an interrupt occurs.
     HALT,
     /// Load register `A` into the location of address `HL`.
     LD_HL_A,
