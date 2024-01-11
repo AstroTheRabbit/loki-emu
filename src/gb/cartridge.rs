@@ -1,5 +1,5 @@
-use std::fs;
 use crate::byte_field;
+use std::fs;
 
 byte_field! {
     /// [pandocs](https://gbdev.io/pandocs/The_Cartridge_Header.html).
@@ -66,6 +66,4 @@ impl CartridgeHeader {
             _ => panic!("Cartridge: RAM size not recognised!"),
         }
     }
-
-
 }

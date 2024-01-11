@@ -19,7 +19,7 @@ pub enum Instruction {
     DEC_B,
     /// Load the immediate value `n8` into register `B`.
     LD_B_n8,
-    /// Rotate register `A` left, setting the carry flag to the bit shifted out of the byte.
+    /// Rotate register `A` left, setting the carry flag to the previous bit 7.
     RLCA,
     /// Load the value of register `SP` into the immediate address `a16`.
     LD_a16_SP,
@@ -35,7 +35,7 @@ pub enum Instruction {
     DEC_C,
     /// Load immediate value `n8` into register `C`.
     LD_C_n8,
-    /// Rotate register `A` right, setting the carry flag to the bit shifted out of the byte.
+    /// Rotate register `A` right, setting the carry flag to the previous bit 1.
     RRCA,
 
     // * 0x1_
@@ -53,7 +53,7 @@ pub enum Instruction {
     DEC_D,
     /// Load the immediate value `n8` into register `D`.
     LD_D_n8,
-    /// Rotate register `A` left with the carry flag.
+    /// Rotate register `A` and the carry flag left.
     RLA,
     /// Add the signed immediate value `e8` to the `PC` and jump to it.
     JR_e8,
@@ -69,7 +69,7 @@ pub enum Instruction {
     DEC_E,
     /// Load the immediate value `n8` into register `E`.
     LD_E_n8,
-    /// Rotate register `A` right with the carry flag.
+    /// Rotate register `A` and the carry flag right.
     RRA,
 
     // * 0x2_
@@ -415,7 +415,7 @@ pub enum Instruction {
     // * 0xC_
     /// Return from subroutine if the zero flag is not set.
     RET_NZ,
-    /// Pop register pair `BC` from the stack.
+    /// Pop from the stack to register pair `BC`.
     POP_BC,
     /// Jump to the immediate address `a16` if the zero flag is not set.
     JP_NZ_a16,
@@ -449,7 +449,7 @@ pub enum Instruction {
     // * 0xD_
     /// Return from subroutine if the carry flag is not set.
     RET_NC,
-    /// Pop register pair `DE` from the stack.
+    /// Pop from the stack to register pair `DE`.
     POP_DE,
     /// Jump to the immediate address `a16` if the carry flag is not set.
     JP_NC_a16,
@@ -477,7 +477,7 @@ pub enum Instruction {
     // * 0xE_
     /// Load register `A` into the location of immediate address `0xFF00 + a8`.
     LDH_a8_A,
-    /// Pop register pair `HL` from the stack.
+    /// Pop from the stack to register pair `HL`.
     POP_HL,
     /// Load register `A` into the location of address `0xFF00 + C`.
     LDH_C_A,
@@ -499,9 +499,9 @@ pub enum Instruction {
     RST_0x28,
 
     // * 0xF_
-    /// Load register `A` into the location of immediate address `0xFF00 + a8`.
+    /// Load the value located at immediate address `0xFF00 + a8` into register `A`.
     LDH_A_a8,
-    /// Pop register pair `AF` from the stack.
+    /// Pop from the stack to register pair `AF`.
     POP_AF,
     /// Load register `A` into the location of address `0xFF00 + C`.
     LDH_A_C,
