@@ -2,8 +2,6 @@ pub mod gb;
 #[macro_use]
 pub mod byte_field;
 
-use gb::cartridge::CartridgeHeader;
-use num_enum::TryFromPrimitive;
 use softbuffer::{Context, Surface};
 use std::{num::NonZeroU32, rc::Rc};
 use winit::{
@@ -12,8 +10,6 @@ use winit::{
     window::WindowBuilder,
 };
 use winit_input_helper::WinitInputHelper;
-
-use crate::gb::utils::split_u16;
 
 // fn main() -> Result<(), EventLoopError> {
 //     let event_loop = EventLoop::new().expect("Unable to create window!");

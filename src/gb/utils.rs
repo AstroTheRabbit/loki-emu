@@ -1,4 +1,3 @@
-use num_enum::IntoPrimitive;
 use std::ops::BitOr;
 
 #[derive(Debug)]
@@ -30,17 +29,28 @@ pub enum RegisterPair {
     SP,
 }
 
-#[derive(Debug, Clone, Copy, IntoPrimitive)]
+#[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum Flag {
     /// Zero flag
-    Z = 0b10000000,
+    Z,
     /// Subtraction flag
-    N = 0b01000000,
+    N,
     /// Half-carry flag
-    H = 0b00100000,
+    H,
     /// Carry flag
-    C = 0b00010000,
+    C,
+}
+
+impl From<Flag> for u8 {
+    fn from(value: Flag) -> Self {
+        match value {
+            Flag::Z => 0b10000000,
+            Flag::N => 0b01000000,
+            Flag::H => 0b00100000,
+            Flag::C => 0b00010000,
+        }
+    }
 }
 
 impl BitOr<Self> for Flag {
