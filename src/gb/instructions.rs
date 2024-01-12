@@ -25,7 +25,7 @@ pub enum Instruction {
     LD_a16_SP,
     /// Add register pairs `HL` and `BC`, storing the result in `HL`.
     ADD_HL_BC,
-    /// Load the value located at address `BC` into register `A`.
+    /// Load the value at address `BC` into register `A`.
     LD_A_BC,
     /// Decrement register pair `BC`.
     DEC_BC,
@@ -35,9 +35,8 @@ pub enum Instruction {
     DEC_C,
     /// Load immediate value `n8` into register `C`.
     LD_C_n8,
-    /// Rotate register `A` right, setting the carry flag to the previous bit 1.
+    /// Rotate register `A` right, setting the carry flag to the previous bit 0.
     RRCA,
-
     // * 0x1_
     /// Stop the CPU & LCD display until a button is pressed (the byte after is also skipped).
     STOP,
@@ -59,7 +58,7 @@ pub enum Instruction {
     JR_e8,
     /// Add register pairs `HL` and `DE`, storing the result in `HL`.
     ADD_HL_DE,
-    /// Load the value located at address `DE` into register `A`.
+    /// Load the value at address `DE` into register `A`.
     LD_A_DE,
     /// Decrement register pair `DE`.
     DEC_DE,
@@ -71,7 +70,6 @@ pub enum Instruction {
     LD_E_n8,
     /// Rotate register `A` and the carry flag right.
     RRA,
-
     // * 0x2_
     /// Add the signed immediate value `e8` to the `PC` and jump to it if the zero flag is not set.
     JR_NZ_e8,
@@ -93,7 +91,7 @@ pub enum Instruction {
     JR_Z_e8,
     /// Add register pair `HL` to itself, storing the result in `HL`.
     ADD_HL_HL,
-    /// Load the value located at address `HL` into register `A`, then increment register pair `HL`.
+    /// Load the value at address `HL` into register `A`, then increment register pair `HL`.
     LDI_A_HL,
     /// Decrement register pair `HL`.
     DEC_HL,
@@ -105,7 +103,6 @@ pub enum Instruction {
     LD_L_n8,
     /// Bitwise invert register `A`.
     CPL,
-
     // * 0x3_
     /// Add the signed immediate value `e8` to the `PC` and jump to it if the carry flag is not set.
     JR_NC_e8,
@@ -115,11 +112,11 @@ pub enum Instruction {
     LDD_HL_A,
     /// Increment the `SP`.
     INC_SP,
-    /// Increment the value located at address `HL`.
+    /// Increment the value at address `HL`.
     INCP_HL,
-    /// Decrement the value located at address `HL`.
+    /// Decrement the value at address `HL`.
     DECP_HL,
-    /// Load the immediate value `n8` into the value located at address `HL`.
+    /// Load the immediate value `n8` into the value at address `HL`.
     LD_HL_n8,
     /// Set the carry flag.
     SCF,
@@ -127,7 +124,7 @@ pub enum Instruction {
     JR_C_e8,
     /// Add the `SP` to register pair `HL`.
     ADD_HL_SP,
-    /// Load the value located at address `HL` into register `A`, then decrement register pair `HL`.
+    /// Load the value at address `HL` into register `A`, then decrement register pair `HL`.
     LDD_A_HL,
     /// Decrement the `SP`.
     DEC_SP,
@@ -139,7 +136,6 @@ pub enum Instruction {
     LD_A_n8,
     /// Invert the carry flag.
     CCF,
-
     // * 0x4_
     /// Load register `B` into itself.
     LD_B_B,
@@ -153,7 +149,7 @@ pub enum Instruction {
     LD_B_H,
     /// Load register `L` into register `B`.
     LD_B_L,
-    /// Load the value located at address `HL` into register `B`.
+    /// Load the value at address `HL` into register `B`.
     LD_B_HL,
     /// Load register `A` into register `B`.
     LD_B_A,
@@ -169,11 +165,10 @@ pub enum Instruction {
     LD_C_H,
     /// Load register `L` into register `C`.
     LD_C_L,
-    /// Load the value located at address `HL` into register `C`.
+    /// Load the value at address `HL` into register `C`.
     LD_C_HL,
     /// Load register `A` into register `C`.
     LD_C_A,
-
     // * 0x5_
     /// Load register `B` into register `D`.
     LD_D_B,
@@ -187,7 +182,7 @@ pub enum Instruction {
     LD_D_H,
     /// Load register `B` into register `D`.
     LD_D_L,
-    /// Load the value located at address `HL` into register `D`.
+    /// Load the value at address `HL` into register `D`.
     LD_D_HL,
     /// Load register `A` into register `D`.
     LD_D_A,
@@ -203,11 +198,10 @@ pub enum Instruction {
     LD_E_H,
     /// Load register `L` into register `E`.
     LD_E_L,
-    /// Load the value located at address `HL` into register `E`.
+    /// Load the value at address `HL` into register `E`.
     LD_E_HL,
     /// Load register `A` into register `E`.
     LD_E_A,
-
     // * 0x6_
     /// Load register `B` into register `H`.
     LD_H_B,
@@ -221,7 +215,7 @@ pub enum Instruction {
     LD_H_H,
     /// Load register `L` into register `H`.
     LD_H_L,
-    /// Load the value located at address `HL` into register `H`.
+    /// Load the value at address `HL` into register `H`.
     LD_H_HL,
     /// Load register `A` into register `H`.
     LD_H_A,
@@ -237,11 +231,10 @@ pub enum Instruction {
     LD_L_H,
     /// Load register `L` into itself.
     LD_L_L,
-    /// Load the value located at address `HL` into register `L`.
+    /// Load the value at address `HL` into register `L`.
     LD_L_HL,
     /// Load register `A` into register `L`.
     LD_L_A,
-
     // * 0x7_
     /// Load register `B` into the location of address `HL`.
     LD_HL_B,
@@ -271,11 +264,10 @@ pub enum Instruction {
     LD_A_H,
     /// Load register `L` into register `A`.
     LD_A_L,
-    /// Load the value located at address `HL` into register `A`.
+    /// Load the value at address `HL` into register `A`.
     LD_A_HL,
     /// Load register `A` into itself.
     LD_A_A,
-
     // * 0x8_
     /// Add register `B` to register `A`.
     ADD_A_B,
@@ -289,7 +281,7 @@ pub enum Instruction {
     ADD_A_H,
     /// Add register `L` to register `A`.
     ADD_A_L,
-    /// Add the value located at address `HL` to register `A`.
+    /// Add the value at address `HL` to register `A`.
     ADD_A_HL,
     /// Add register `A` to itself.
     ADD_A_A,
@@ -305,11 +297,10 @@ pub enum Instruction {
     ADC_A_H,
     /// Add register `L` and the carry flag to register `A`.
     ADC_A_L,
-    /// Add the value located at address `HL` and the carry flag to register `A`.
+    /// Add the value at address `HL` and the carry flag to register `A`.
     ADC_A_HL,
     /// Add register `A` and the carry flag to `A`.
     ADC_A_A,
-
     // * 0x9_
     /// Subtract register `B` from register `A`.
     SUB_A_B,
@@ -323,7 +314,7 @@ pub enum Instruction {
     SUB_A_H,
     /// Subtract register `L` from register `A`.
     SUB_A_L,
-    /// Subtract the value located at address `HL` from register `A`.
+    /// Subtract the value at address `HL` from register `A`.
     SUB_A_HL,
     /// Subtract register `A` from itself.
     SUB_A_A,
@@ -339,11 +330,10 @@ pub enum Instruction {
     SBC_A_H,
     /// Subtract register `L` and the carry flag from register `A`.
     SBC_A_L,
-    /// Subtract the value located at address `HL` and the carry flag from register `A`.
+    /// Subtract the value at address `HL` and the carry flag from register `A`.
     SBC_A_HL,
     /// Subtract register `A` and the carry flag from `A`.
     SBC_A_A,
-
     // * 0xA_
     /// Bitwise AND registers `A` and `B`, storing the result in `A`.
     AND_A_B,
@@ -357,7 +347,7 @@ pub enum Instruction {
     AND_A_H,
     /// Bitwise AND registers `A` and `L`, storing the result in `A`.
     AND_A_L,
-    /// Bitwise AND register `A` and the value located at address `HL` storing the result in `A`.
+    /// Bitwise AND register `A` and the value at address `HL` storing the result in `A`.
     AND_A_HL,
     /// Bitwise AND register `A` with itself, storing the result in `A`.
     AND_A_A,
@@ -373,11 +363,10 @@ pub enum Instruction {
     XOR_A_H,
     /// Bitwise XOR registers `A` and `L`, storing the result in `A`.
     XOR_A_L,
-    /// Bitwise XOR register `A` and the value located at address `HL` storing the result in `A`.
+    /// Bitwise XOR register `A` and the value at address `HL` storing the result in `A`.
     XOR_A_HL,
     /// Bitwise XOR register `A` with itself, storing the result in `A`.
     XOR_A_A,
-
     // * 0xB_
     /// Bitwise OR registers `A` and `B`, storing the result in `A`.
     OR_A_B,
@@ -391,7 +380,7 @@ pub enum Instruction {
     OR_A_H,
     /// Bitwise OR registers `A` and `L`, storing the result in `A`.
     OR_A_L,
-    /// Bitwise OR register `A` and the value located at address `HL` storing the result in `A`.
+    /// Bitwise OR register `A` and the value at address `HL` storing the result in `A`.
     OR_A_HL,
     /// Bitwise OR register `A` with itself, storing the result in `A`.
     OR_A_A,
@@ -407,11 +396,10 @@ pub enum Instruction {
     CP_A_H,
     /// Subtract register `L` from register `A`, but do not store the result.
     CP_A_L,
-    /// Subtract the value located at address `HL` from register `A`, but do not store the result.
+    /// Subtract the value at address `HL` from register `A`, but do not store the result.
     CP_A_HL,
     /// Subtract register `A` from itself, but do not store the result.
     CP_A_A,
-
     // * 0xC_
     /// Return from subroutine if the zero flag is not set.
     RET_NZ,
@@ -445,7 +433,6 @@ pub enum Instruction {
     ADC_A_n8,
     /// Call the address `0x08`.
     RST_0x08,
-
     // * 0xD_
     /// Return from subroutine if the carry flag is not set.
     RET_NC,
@@ -473,7 +460,6 @@ pub enum Instruction {
     SBC_A_n8 = 0xDE,
     /// Call the address `0x18`.
     RST_0x18,
-
     // * 0xE_
     /// Load register `A` into the location of immediate address `0xFF00 + a8`.
     LDH_a8_A,
@@ -497,9 +483,8 @@ pub enum Instruction {
     XOR_A_n8 = 0xEE,
     /// Call the address `0x28`.
     RST_0x28,
-
     // * 0xF_
-    /// Load the value located at immediate address `0xFF00 + a8` into register `A`.
+    /// Load the value at immediate address `0xFF00 + a8` into register `A`.
     LDH_A_a8,
     /// Pop from the stack to register pair `AF`.
     POP_AF,
@@ -517,7 +502,7 @@ pub enum Instruction {
     LD_HL_SP_e8,
     /// Load register pair `HL` into the `SP`.
     LD_SP_HL,
-    /// Load the value located at immediate address `a16` into register `A`.
+    /// Load the value at immediate address `a16` into register `A`.
     LD_A_a16,
     /// Enable interrupts by setting the IME flag after the next instruction.
     EI,

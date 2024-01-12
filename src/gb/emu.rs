@@ -4,7 +4,7 @@ use super::{bus::Bus, cpu::CPU, instructions::Instruction, utils::*};
 pub struct GameBoyEmulator {
     pub cpu: CPU,
     pub bus: Bus,
-    pub ime: bool,
+    pub ime: IME,
 }
 
 impl GameBoyEmulator {
@@ -64,7 +64,6 @@ impl GameBoyEmulator {
                 // ! This instruction is slightly different to the prefixed `RRC A` ! (Flag Z is unset vs dependent)
                 self.cpu.set_flag(Flag::Z, false);
             }
-
             // * 0x1_
             Instruction::STOP => todo!(),
             Instruction::LD_DE_n16 => self.LD_r16_n16(RegisterPair::DE),
@@ -90,7 +89,6 @@ impl GameBoyEmulator {
                 // ! This instruction is slightly different to the prefixed `RR A` ! (Flag Z is unset vs dependent)
                 self.cpu.set_flag(Flag::Z, false);
             }
-
             // * 0x2_
             Instruction::JR_NZ_e8 => {
                 if !self.cpu.get_flag(Flag::Z) {
@@ -126,7 +124,6 @@ impl GameBoyEmulator {
                 self.cpu.set_register(Register::A, !v);
                 self.cpu.set_flag(Flag::N | Flag::H, true);
             }
-
             // * 0x3_
             Instruction::JR_NC_e8 => {
                 if !self.cpu.get_flag(Flag::C) {
@@ -173,7 +170,6 @@ impl GameBoyEmulator {
                 self.cpu.toggle_flag(Flag::C);
                 self.cpu.set_flag(Flag::N | Flag::H, false);
             }
-
             // * 0x4_
             Instruction::LD_B_B => self.LD_r8_r8(Register::B, Register::B),
             Instruction::LD_B_C => self.LD_r8_r8(Register::B, Register::C),
@@ -191,7 +187,6 @@ impl GameBoyEmulator {
             Instruction::LD_C_L => self.LD_r8_r8(Register::C, Register::L),
             Instruction::LD_C_HL => self.LD_r8_r16(Register::C, RegisterPair::HL),
             Instruction::LD_C_A => self.LD_r8_r8(Register::C, Register::A),
-
             // * 0x5_
             Instruction::LD_D_B => self.LD_r8_r8(Register::D, Register::B),
             Instruction::LD_D_C => self.LD_r8_r8(Register::D, Register::C),
@@ -209,7 +204,6 @@ impl GameBoyEmulator {
             Instruction::LD_E_L => self.LD_r8_r8(Register::E, Register::L),
             Instruction::LD_E_HL => self.LD_r8_r16(Register::E, RegisterPair::HL),
             Instruction::LD_E_A => self.LD_r8_r8(Register::E, Register::A),
-
             // * 0x6_
             Instruction::LD_H_B => self.LD_r8_r8(Register::H, Register::B),
             Instruction::LD_H_C => self.LD_r8_r8(Register::H, Register::C),
@@ -227,7 +221,6 @@ impl GameBoyEmulator {
             Instruction::LD_L_L => self.LD_r8_r8(Register::L, Register::L),
             Instruction::LD_L_HL => self.LD_r8_r16(Register::L, RegisterPair::HL),
             Instruction::LD_L_A => self.LD_r8_r8(Register::L, Register::A),
-
             // * 0x7_
             Instruction::LD_HL_B => self.LD_r16_r8(RegisterPair::HL, Register::B),
             Instruction::LD_HL_C => self.LD_r16_r8(RegisterPair::HL, Register::C),
@@ -245,7 +238,6 @@ impl GameBoyEmulator {
             Instruction::LD_A_L => self.LD_r8_r8(Register::A, Register::L),
             Instruction::LD_A_HL => self.LD_r8_r16(Register::A, RegisterPair::HL),
             Instruction::LD_A_A => self.LD_r8_r8(Register::A, Register::A),
-
             // * 0x8_
             Instruction::ADD_A_B => self.ADD_r8_r8(Register::A, Register::B),
             Instruction::ADD_A_C => self.ADD_r8_r8(Register::A, Register::C),
@@ -263,7 +255,6 @@ impl GameBoyEmulator {
             Instruction::ADC_A_L => self.ADC_r8_r8(Register::A, Register::L),
             Instruction::ADC_A_HL => self.ADC_r8_r16(Register::A, RegisterPair::HL),
             Instruction::ADC_A_A => self.ADC_r8_r8(Register::A, Register::A),
-
             // * 0x9_
             Instruction::SUB_A_B => self.SUB_r8_r8(Register::A, Register::B),
             Instruction::SUB_A_C => self.SUB_r8_r8(Register::A, Register::C),
@@ -281,7 +272,6 @@ impl GameBoyEmulator {
             Instruction::SBC_A_L => self.SBC_r8_r8(Register::A, Register::L),
             Instruction::SBC_A_HL => self.SBC_r8_r16(Register::A, RegisterPair::HL),
             Instruction::SBC_A_A => self.SBC_r8_r8(Register::A, Register::A),
-
             // * 0xA_
             Instruction::AND_A_B => self.AND_r8_r8(Register::A, Register::B),
             Instruction::AND_A_C => self.AND_r8_r8(Register::A, Register::C),
@@ -299,7 +289,6 @@ impl GameBoyEmulator {
             Instruction::XOR_A_L => self.XOR_r8_r8(Register::A, Register::L),
             Instruction::XOR_A_HL => self.XOR_r8_r16(Register::A, RegisterPair::HL),
             Instruction::XOR_A_A => self.XOR_r8_r8(Register::A, Register::A),
-
             // * 0xB_
             Instruction::OR_A_B => self.OR_r8_r8(Register::A, Register::B),
             Instruction::OR_A_C => self.OR_r8_r8(Register::A, Register::C),
@@ -317,7 +306,6 @@ impl GameBoyEmulator {
             Instruction::CP_A_L => self.CP_r8_r8(Register::A, Register::L),
             Instruction::CP_A_HL => self.CP_r8_r16(Register::A, RegisterPair::HL),
             Instruction::CP_A_A => self.CP_r8_r8(Register::A, Register::A),
-
             // * 0xC_
             Instruction::RET_NZ => {
                 if !self.cpu.get_flag(Flag::Z) {
@@ -350,7 +338,7 @@ impl GameBoyEmulator {
                     self.JP_a16();
                 }
             }
-            Instruction::PREFIX => todo!(),
+            Instruction::PREFIX => self.PREFIX_n8(),
             Instruction::CALL_Z_a16 => {
                 if self.cpu.get_flag(Flag::Z) {
                     self.CALL_a16();
@@ -359,7 +347,6 @@ impl GameBoyEmulator {
             Instruction::CALL_a16 => self.CALL_a16(),
             Instruction::ADC_A_n8 => self.ADC_r8_n8(Register::A),
             Instruction::RST_0x08 => self.RST_a16(0x0008),
-
             // * 0xD_
             Instruction::RET_NC => {
                 if !self.cpu.get_flag(Flag::C) {
@@ -386,8 +373,8 @@ impl GameBoyEmulator {
                 }
             }
             Instruction::RETI => {
+                self.ime = IME::Enabled;
                 self.RET();
-                self.ime = true;
             }
             Instruction::JP_C_a16 => {
                 if self.cpu.get_flag(Flag::C) {
@@ -401,7 +388,6 @@ impl GameBoyEmulator {
             }
             Instruction::SBC_A_n8 => self.SBC_r8_n8(Register::A),
             Instruction::RST_0x18 => self.RST_a16(0x0018),
-
             // * 0xE_
             Instruction::LDH_a8_A => {
                 let address = join_u16(self.read_u8(RegisterPair::PC), 0xFF);
@@ -442,7 +428,6 @@ impl GameBoyEmulator {
                 self.cpu.set_flag(Flag::N | Flag::H | Flag::C, false);
             }
             Instruction::RST_0x28 => self.RST_a16(0x0028),
-
             // * 0xF_
             Instruction::LDH_A_a8 => {
                 let address = join_u16(self.read_u8(RegisterPair::PC), 0xFF);
@@ -455,7 +440,7 @@ impl GameBoyEmulator {
                 let v = self.bus.read(address);
                 self.cpu.set_register(Register::A, v);
             }
-            Instruction::DI => self.ime = false,
+            Instruction::DI => self.ime = IME::Disabled,
             Instruction::PUSH_AF => self.PUSH_r16(RegisterPair::AF),
             Instruction::OR_A_n8 => {
                 let val = self.read_u8(RegisterPair::PC);
@@ -481,7 +466,7 @@ impl GameBoyEmulator {
                 let v = self.bus.read(address);
                 self.cpu.set_register(Register::A, v);
             }
-            Instruction::EI => todo!(),
+            Instruction::EI => self.ime = IME::Scheduled,
             Instruction::CP_A_n8 => {
                 let val = self.read_u8(RegisterPair::PC);
                 let _ = self.cpu.sub_register(Register::A, val);

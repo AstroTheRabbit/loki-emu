@@ -1,6 +1,13 @@
 use num_enum::IntoPrimitive;
 use std::ops::BitOr;
 
+#[derive(Debug)]
+pub enum IME {
+    Disabled,
+    Scheduled,
+    Enabled,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Register {
     A,

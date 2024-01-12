@@ -69,10 +69,5 @@ use crate::gb::utils::split_u16;
 // }
 
 fn main() {
-    let cartridge = CartridgeHeader::load_from_file("./roms/Pokémon Red Version.gb").unwrap();
-    println!("{:X?}", cartridge);
-
-    for b in cartridge.entry_point {
-        dbg!(self::gb::instructions::Instruction::try_from_primitive(b));
-    }
+    
 }
