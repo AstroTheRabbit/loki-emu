@@ -1,37 +1,24 @@
-#[macro_export]
-macro_rules! sum_lengths {
-    ($($length:expr),+) => {{
-        let mut sum = 0;
-        $(sum += $length;)+
-        sum
-    }};
-}
 
 #[macro_export]
 macro_rules! byte_field {
-    ($(#[$meta:meta])* $struct_name:ident; $($field:ident: $length:expr),+ $(,)?) => {
-        use crate::sum_lengths;
-
-        #[derive(Debug)]
-        $(#[$meta])*
-        pub struct $struct_name {
+    (
+        $(#[$struct_attr:meta])*
+        $struct_vis:vis $struct_name:ident;
+        $($field_vis:vis $field_name:ident: $length:expr),* $(,)?
+    ) => {
+        $(#[$struct_attr])*
+        $struct_vis struct $struct_name {
             $(
-                pub $field: [u8; $length],
-            )+
+                $field_vis $field_name: [u8; $length],
+            )*
         }
 
         impl $struct_name {
-            fn as_bytes(&self) -> &[u8] {
-                unsafe {
-                    let base_ptr = self as *const Self as *const u8;
-                    std::slice::from_raw_parts(base_ptr, sum_lengths!($($length),+))
-                }
-            }
-
-            fn as_mut_bytes(&mut self) -> &mut [u8] {
-                unsafe {
-                    let base_ptr = self as *mut Self as *mut u8;
-                    std::slice::from_raw_parts_mut(base_ptr, sum_lengths!($($length),+))
+            pub fn new_empty() -> Self {
+                Self {
+                    $(
+                        $field_name: [0; $length],
+                    )*
                 }
             }
         }
@@ -39,31 +26,40 @@ macro_rules! byte_field {
         impl std::ops::Index<usize> for $struct_name {
             type Output = u8;
 
-            fn index(&self, index: usize) -> &Self::Output {
-                &self.as_bytes()[index]
+            fn index(&self, mut index: usize) -> &Self::Output {
+                $(
+                    if index < $length {
+                        return &self.$field_name[index];
+                    } else {
+                        index -= $length;
+                    }
+
+                )*
+                panic!("Index out of bounds: {}", index);
             }
         }
 
         impl std::ops::IndexMut<usize> for $struct_name {
-            fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-                &mut self.as_mut_bytes()[index]
+            fn index_mut(&mut self, mut index: usize) -> &mut Self::Output {
+                $(
+                    if index < $length {
+                        return &mut self.$field_name[index];
+                    } else {
+                        index -= $length;
+                    }
+
+                )*
+                panic!("Index out of bounds: {}", index);
             }
         }
 
-        impl From<[u8; sum_lengths!($($length),+)]> for $struct_name {
-            fn from(bytes: [u8; sum_lengths!($($length),+)]) -> Self {
-                let mut offset = 0;
-                $(
-                    let $field = {
-                        let start = offset;
-                        offset += $length;
-                        let end = offset;
-                        let mut array = [0; $length];
-                        array.copy_from_slice(&bytes[start..end]);
-                        array
-                    };
-                )+
-                $struct_name { $($field),+ }
+        impl From<[u8; 0 $(+ $length)*]> for $struct_name {
+            fn from(value: [u8; 0 $(+ $length)*]) -> Self {
+                let mut s = Self::new_empty();
+                for i in 0..value.len() {
+                    s[i] = value[i];
+                }
+                return s;
             }
         }
     };

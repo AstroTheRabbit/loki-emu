@@ -3,20 +3,21 @@ use std::fs;
 
 byte_field! {
     /// [pandocs](https://gbdev.io/pandocs/The_Cartridge_Header.html).
-    CartridgeHeader;
-    entry_point:       4,
-    nintendo_logo:     48,
-    title:             16,
-    licensee_code:     2,
-    sgb_flag:          1,
-    cartridge_type:    1,
-    rom_size:          1,
-    ram_size:          1,
-    destination_code:  1,
-    old_licensee_code: 1,
-    version_number:    1,
-    header_checksum:   1,
-    global_checksum:   2,
+    #[derive(Debug)]
+    pub CartridgeHeader;
+    pub entry_point:       4,
+    pub nintendo_logo:     48,
+    pub title:             16,
+    pub licensee_code:     2,
+    pub sgb_flag:          1,
+    pub cartridge_type:    1,
+    pub rom_size:          1,
+    pub ram_size:          1,
+    pub destination_code:  1,
+    pub old_licensee_code: 1,
+    pub version_number:    1,
+    pub header_checksum:   1,
+    pub global_checksum:   2,
 }
 
 impl CartridgeHeader {
@@ -33,7 +34,7 @@ impl CartridgeHeader {
 
         let mut s = Self::from([0; 80]);
         for i in 0..80 {
-            s[i] = f[i + 0x0104]
+            s[i] = f[i + 0x0100]
         }
 
         return Ok(s);

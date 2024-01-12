@@ -1,5 +1,4 @@
 pub mod gb;
-#[macro_use]
 pub mod byte_field;
 
 use softbuffer::{Context, Surface};
@@ -65,5 +64,28 @@ use winit_input_helper::WinitInputHelper;
 // }
 
 fn main() {
-    
+    byte_field! {
+        #[derive(Debug, Clone, Copy)]
+        pub TestStruct;
+        pub part_1: 1,
+        part_2: 2,
+        pub part_3: 4,
+        part_4: 8,
+    }
+
+    let mut test_struct = TestStruct {
+        part_1: [0; 1],
+        part_2: [0; 2],
+        part_3: [0; 4],
+        part_4: [0; 8],
+    };
+
+    test_struct[0] = 42;
+    println!("test_struct[0]: {}", test_struct[0]); // prints "test_struct[0]: 42"
+
+    test_struct[3] = 99;
+    test_struct[10] = 0xFF;
+    println!("test_struct[3]: {}", test_struct[3]); // prints "test_struct[3]: 99"
+
+    dbg!(test_struct);
 }

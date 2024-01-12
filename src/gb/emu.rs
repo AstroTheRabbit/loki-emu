@@ -3,13 +3,14 @@ use super::{bus::Bus, cpu::CPU, utils::*};
 #[derive(Debug)]
 pub struct GameBoyEmulator {
     pub cpu: CPU,
-    pub bus: Bus,
     pub ime: IME,
+    pub bus: Bus,
 }
 
 impl GameBoyEmulator {
     pub fn step(&mut self) {
-        todo!();
+        let next_instruction = self.read_u8(RegisterPair::PC);
+        self.run_instruction(next_instruction);
     }
 
     /// Read and return a byte from address `r16`, then increment `r16`.

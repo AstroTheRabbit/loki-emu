@@ -9,9 +9,10 @@ pub struct Bus {
 }
 
 byte_field! {
-    /// ROM run when the Game Boy is powered on.
-    BootROM;
-    rom: 256,
+    /// ROM that runs when the Game Boy is powered on.
+    #[derive(Debug)]
+    pub BootROM;
+    pub rom: 256,
 }
 
 impl Bus {
