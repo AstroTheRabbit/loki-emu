@@ -1,6 +1,6 @@
 use crate::byte_field;
 
-use super::cartridge_header::CartridgeHeader;
+use super::cartridge::CartridgeHeader;
 use super::graphics::{VRAM, OAM};
 
 static mut BOOT_ROM: [u8; 256] = *include_bytes!("../../roms/GB Boot ROM.bin");
@@ -11,6 +11,9 @@ pub struct Bus {
     pub vram: VRAM,
     pub wram: WRAM,
     pub oam: OAM,
+    pub io_registers: IORegisters,
+    pub hram: HRAM,
+    pub ie_register: u8,
 }
 
 byte_field! {
@@ -18,6 +21,20 @@ byte_field! {
     #[derive(Debug)]
     pub WRAM;
     pub ram: 8192,
+}
+
+byte_field! {
+    /// Input / output registers for player controls.
+    #[derive(Debug)]
+    pub IORegisters;
+    pub ram: 128,
+}
+
+byte_field! {
+    /// High RAM, mostly the same as WRAM.
+    #[derive(Debug)]
+    pub HRAM;
+    pub ram: 128,
 }
 
 impl Bus {
@@ -36,12 +53,12 @@ impl Bus {
             0x8000..=0x9FFF => &mut self.vram[address as usize - 0x8000],
             0xA000..=0xBFFF => todo!("GB - Swappable RAM"),
             0xC000..=0xDFFF => &mut self.wram[address as usize - 0xC000],
-            0xE000..=0xFDFF => todo!("GB - ECHO RAM"),
+            0xE000..=0xFDFF => &mut self.wram[address as usize - 0xE000],
             0xFE00..=0xFE9F => &mut self.oam[address as usize - 0xFE00],
             0xFEA0..=0xFEFF => unimplemented!("GB - 0xFEA0..=0xFEFF not usable!"),
-            0xFF00..=0xFF7F => todo!("GB - IO Registers"),
-            0xFF80..=0xFFFE => todo!("GB - HRAM"),
-            0xFFFF => todo!("GB - IE Register"),
+            0xFF00..=0xFF7F => &mut self.io_registers[address as usize - 0xFF00],
+            0xFF80..=0xFFFE => &mut self.hram[address as usize - 0xFF80],
+            0xFFFF => &mut self.ie_register,
         }
     }
 

@@ -1,5 +1,5 @@
 pub mod bus;
-pub mod cartridge_header;
+pub mod cartridge;
 pub mod cpu;
 /// The original Nintendo Game Boy
 pub mod emu;
