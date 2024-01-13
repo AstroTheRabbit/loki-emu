@@ -45,8 +45,8 @@ impl GameBoyEmulator {
                 self.cpu.set_flag(Flag::Z, false);
             }
             // * 0x1_
-            // Stop the CPU & LCD display until a button is pressed (the byte after is also skipped).
-            0x10 => todo!(),
+            // Stop the CPU & LCD display until an interupt occurs.
+            0x10 => self.is_halted = true,
             // Load the immediate value `n16` into register pair `DE`.
             0x11 => self.LD_r16_n16(RegisterPair::DE),
             // Load the value of `A` into the location of address `DE`.
@@ -87,11 +87,7 @@ impl GameBoyEmulator {
             }
             // * 0x2_
             // Add the signed immediate value `e8` to the `PC` and jump to it if the zero flag is not set.
-            0x20 => {
-                if !self.cpu.get_flag(Flag::Z) {
-                    self.JR_e8();
-                }
-            }
+            0x20 => self.JR_nc_e8(Flag::Z),
             // Load the immediate value `n16` into register pair `HL`.
             0x21 => self.LD_r16_n16(RegisterPair::HL),
             // Load the value of `A` into the location of address `HL`, then increment register pair `HL`.
@@ -108,13 +104,9 @@ impl GameBoyEmulator {
             // Load the immediate value `n8` into register `H`.
             0x26 => self.LD_r8_n8(Register::H),
             // Decimal Adjust Accumulator.
-            0x27 => todo!(),
+            0x27 => todo!("GB - DAA Instruction"),
             // Add the signed immediate value `e8` to the `PC` and jump to it if the zero flag is set.
-            0x28 => {
-                if self.cpu.get_flag(Flag::Z) {
-                    self.JR_e8();
-                }
-            }
+            0x28 => self.JR_c_e8(Flag::Z),
             // Add register pair `HL` to itself, storing the result in `HL`.
             0x29 => self.ADD_r16_r16(RegisterPair::HL, RegisterPair::HL),
             // Load the value at address `HL` into register `A`, then increment register pair `HL`.
@@ -138,11 +130,7 @@ impl GameBoyEmulator {
             }
             // * 0x3_
             // Add the signed immediate value `e8` to the `PC` and jump to it if the carry flag is not set.
-            0x30 => {
-                if !self.cpu.get_flag(Flag::C) {
-                    self.JR_e8();
-                }
-            }
+            0x30 => self.JR_nc_e8(Flag::C),
             // Load the immdediate value `n16` into the `SP`.
             0x31 => self.LD_r16_n16(RegisterPair::SP),
             // Load the value of `A` into the location of address `HL`, then decrement register pair `HL`.
@@ -173,11 +161,7 @@ impl GameBoyEmulator {
             // Set the carry flag.
             0x37 => self.cpu.set_flag(Flag::C, true),
             // Add the signed immediate value `e8` to the `PC` and jump to it if the carry flag is set.
-            0x38 => {
-                if self.cpu.get_flag(Flag::C) {
-                    self.JR_e8();
-                }
-            }
+            0x38 => self.JR_c_e8(Flag::C),
             // Add the `SP` to register pair `HL`.
             0x39 => self.ADD_r16_r16(RegisterPair::HL, RegisterPair::SP),
             // Load the value at address `HL` into register `A`, then decrement register pair `HL`.
@@ -472,19 +456,11 @@ impl GameBoyEmulator {
             // Pop from the stack to register pair `BC`.
             0xC1 => self.POP_r16(RegisterPair::BC),
             // Jump to the immediate address `a16` if the zero flag is not set.
-            0xC2 => {
-                if !self.cpu.get_flag(Flag::Z) {
-                    self.JP_a16();
-                }
-            }
+            0xC2 => self.JP_nc_a16(Flag::Z),
             // Jump to the immediate address `a16`.
             0xC3 => self.JP_a16(),
             // Call the immediate address `a16` if the zero flag is not set.
-            0xC4 => {
-                if !self.cpu.get_flag(Flag::Z) {
-                    self.CALL_a16();
-                }
-            }
+            0xC4 => self.CALL_nc_a16(Flag::Z),
             // Push register pair `BC` into the stack.
             0xC5 => self.PUSH_r16(RegisterPair::BC),
             // Add the immediate value `n8` to register `A`.
@@ -500,19 +476,11 @@ impl GameBoyEmulator {
             // Return from subroutine.
             0xC9 => self.RET(),
             // Jump to the immediate address `a16` if the zero flag is set.
-            0xCA => {
-                if self.cpu.get_flag(Flag::Z) {
-                    self.JP_a16();
-                }
-            }
+            0xCA => self.JP_c_a16(Flag::Z),
             // Access to secondary prefixed instructions.
             0xCB => self.PREFIX_n8(),
             // Call the immediate address `a16` if the zero flag is set.
-            0xCC => {
-                if self.cpu.get_flag(Flag::Z) {
-                    self.CALL_a16();
-                }
-            }
+            0xCC => self.CALL_c_a16(Flag::Z),
             // Call the immediate address `a16`.
             0xCD => self.CALL_a16(),
             // Add the immediate value `n8` and the carry flag to register `A`.
@@ -529,17 +497,9 @@ impl GameBoyEmulator {
             // Pop from the stack to register pair `DE`.
             0xD1 => self.POP_r16(RegisterPair::DE),
             // Jump to the immediate address `a16` if the carry flag is not set.
-            0xD2 => {
-                if !self.cpu.get_flag(Flag::C) {
-                    self.JP_a16();
-                }
-            }
+            0xD2 => self.JP_nc_a16(Flag::C),
             // Call the immediate address `a16` if the carry flag is not set.
-            0xD4 => {
-                if !self.cpu.get_flag(Flag::C) {
-                    self.CALL_a16();
-                }
-            }
+            0xD4 => self.CALL_nc_a16(Flag::C),
             // Push register pair `DE` into the stack.
             0xD5 => self.PUSH_r16(RegisterPair::DE),
             // Subtract the immediate value `n8` from register `A`.
@@ -558,17 +518,9 @@ impl GameBoyEmulator {
                 self.RET();
             }
             // Jump to the immediate address `a16` if the carry flag is set.
-            0xDA => {
-                if self.cpu.get_flag(Flag::C) {
-                    self.JP_a16();
-                }
-            }
+            0xDA => self.JP_c_a16(Flag::C),
             // Call the immediate address `a16` if the carry flag is set.
-            0xDC => {
-                if self.cpu.get_flag(Flag::C) {
-                    self.CALL_a16();
-                }
-            }
+            0xDC => self.CALL_c_a16(Flag::C),
             // Subtract the immediate value `n8` and the carry flag from register `A`.
             0xDE => self.SBC_r8_n8(Register::A),
             // Call the address `0x18`.

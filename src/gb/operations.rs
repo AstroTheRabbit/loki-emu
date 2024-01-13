@@ -267,10 +267,44 @@ impl GameBoyEmulator {
             .set_register_pair(RegisterPair::PC, r.wrapping_add_signed(v.into()));
     }
 
+    /// If flag `c` is set, add the signed immediate value `e8` to the `PC` and jump to it.
+    pub fn JR_c_e8(&mut self, c: Flag) {
+        let v = self.read_u8(RegisterPair::PC) as i8;
+        if self.cpu.get_flag(c) {
+            let r = self.cpu.get_register_pair(RegisterPair::PC);
+            self.cpu.set_register_pair(RegisterPair::PC, r.wrapping_add_signed(v.into()));
+        }
+    }
+
+    /// If flag `c` is not set, add the signed immediate value `e8` to the `PC` and jump to it.
+    pub fn JR_nc_e8(&mut self, c: Flag) {
+        let v = self.read_u8(RegisterPair::PC) as i8;
+        if !self.cpu.get_flag(c) {
+            let r = self.cpu.get_register_pair(RegisterPair::PC);
+            self.cpu.set_register_pair(RegisterPair::PC, r.wrapping_add_signed(v.into()));
+        }
+    }
+
     /// Jump to the immediate address `a16`.
     pub fn JP_a16(&mut self) {
         let v = self.read_u16(RegisterPair::PC);
         self.cpu.set_register_pair(RegisterPair::PC, v);
+    }
+
+    /// If flag `c` is set, jump to the immediate address `a16`.
+    pub fn JP_c_a16(&mut self, c: Flag) {
+        let v = self.read_u16(RegisterPair::PC);
+        if self.cpu.get_flag(c) {
+            self.cpu.set_register_pair(RegisterPair::PC, v);
+        }
+    }
+
+    /// If flag `c` is not set, jump to the immediate address `a16`.
+    pub fn JP_nc_a16(&mut self, c: Flag) {
+        let v = self.read_u16(RegisterPair::PC);
+        if !self.cpu.get_flag(c) {
+            self.cpu.set_register_pair(RegisterPair::PC, v);
+        }
     }
 
     // * RET, CALL & RST
@@ -287,6 +321,26 @@ impl GameBoyEmulator {
         let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
         self.write_stack(prev_pc);
         self.cpu.set_register_pair(RegisterPair::PC, v);
+    }
+
+    /// If flag `c` is set, call function at the immediate address `a16`.
+    pub fn CALL_c_a16(&mut self, c: Flag) {
+        let v = self.read_u16(RegisterPair::PC);
+        if self.cpu.get_flag(c) {
+            let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
+            self.write_stack(prev_pc);
+            self.cpu.set_register_pair(RegisterPair::PC, v);
+        }
+    }
+
+    /// If flag `c` is not set, call function at the immediate address `a16`.
+    pub fn CALL_nc_a16(&mut self, c: Flag) {
+        let v = self.read_u16(RegisterPair::PC);
+        if !self.cpu.get_flag(c) {
+            let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
+            self.write_stack(prev_pc);
+            self.cpu.set_register_pair(RegisterPair::PC, v);
+        }
     }
 
     /// Call fixed address `a16`.
@@ -334,7 +388,7 @@ impl GameBoyEmulator {
         self.cpu.set_flag(Flag::C, new_carry);
         self.cpu.set_flag(Flag::N | Flag::H, false);
     }
-    
+
     /// Rotate register `r8` right, setting the carry flag to the previous bit 0.
     pub fn RRC_r8(&mut self, r8: Register) {
         let v = self.cpu.get_register(r8);
@@ -346,7 +400,7 @@ impl GameBoyEmulator {
         self.cpu.set_flag(Flag::C, new_carry);
         self.cpu.set_flag(Flag::N | Flag::H, false);
     }
-    
+
     /// Rotate the value at `r16` left, setting the carry flag to the previous bit 7.
     pub fn RLC_r16(&mut self, r16: RegisterPair) {
         let address = self.cpu.get_register_pair(r16);

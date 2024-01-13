@@ -1,14 +1,14 @@
-
 #[macro_export]
 macro_rules! byte_field {
     (
         $(#[$struct_attr:meta])*
         $struct_vis:vis $struct_name:ident;
-        $($field_vis:vis $field_name:ident: $length:expr),* $(,)?
+        $($(#[$field_attr:meta])* $field_vis:vis $field_name:ident: $length:expr),* $(,)?
     ) => {
         $(#[$struct_attr])*
         $struct_vis struct $struct_name {
             $(
+                $(#[$field_attr])*
                 $field_vis $field_name: [u8; $length],
             )*
         }
@@ -20,6 +20,10 @@ macro_rules! byte_field {
                         $field_name: [0; $length],
                     )*
                 }
+            }
+
+            const fn len() -> usize {
+                return 0 $(+ $length)*;
             }
         }
 
@@ -53,10 +57,10 @@ macro_rules! byte_field {
             }
         }
 
-        impl From<[u8; 0 $(+ $length)*]> for $struct_name {
-            fn from(value: [u8; 0 $(+ $length)*]) -> Self {
+        impl From<[u8; Self::len()]> for $struct_name {
+            fn from(value: [u8; Self::len()]) -> Self {
                 let mut s = Self::new_empty();
-                for i in 0..value.len() {
+                for i in 0..Self::len() {
                     s[i] = value[i];
                 }
                 return s;

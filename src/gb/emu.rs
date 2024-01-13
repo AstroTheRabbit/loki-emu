@@ -4,13 +4,20 @@ use super::{bus::Bus, cpu::CPU, utils::*};
 pub struct GameBoyEmulator {
     pub cpu: CPU,
     pub ime: IME,
+    pub is_halted: bool,
+    pub current_cycles: usize,
     pub bus: Bus,
 }
 
 impl GameBoyEmulator {
     pub fn step(&mut self) {
+        if self.is_halted {
+            return;
+        }
+
         let next_instruction = self.read_u8(RegisterPair::PC);
         self.run_instruction(next_instruction);
+        println!();
     }
 
     /// Read and return a byte from address `r16`, then increment `r16`.
@@ -18,7 +25,9 @@ impl GameBoyEmulator {
     pub fn read_u8(&mut self, r16: RegisterPair) -> u8 {
         let address = self.cpu.get_register_pair(r16);
         self.cpu.increment_register_pair(r16);
-        return self.bus.read(address);
+        let res = self.bus.read(address);
+        print!("{res:x},");
+        return res;
     }
 
     /// Run [`GameBoyEmulator::read_u8`] twice, returning the two bytes and incrementing `r16` twice.
