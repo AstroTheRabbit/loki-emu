@@ -61,16 +61,16 @@ impl CPU {
         }
     }
 
-    pub fn set_register(&mut self, reg: Register, v: u8) {
+    pub fn set_register(&mut self, reg: Register, value: u8) {
         match reg {
-            Register::A => self.a = v,
-            Register::F => self.f = v,
-            Register::B => self.b = v,
-            Register::C => self.c = v,
-            Register::D => self.d = v,
-            Register::E => self.e = v,
-            Register::H => self.h = v,
-            Register::L => self.l = v,
+            Register::A => self.a = value,
+            Register::F => self.f = value,
+            Register::B => self.b = value,
+            Register::C => self.c = value,
+            Register::D => self.d = value,
+            Register::E => self.e = value,
+            Register::H => self.h = value,
+            Register::L => self.l = value,
         }
     }
 
@@ -85,14 +85,14 @@ impl CPU {
         }
     }
 
-    pub fn set_register_pair(&mut self, pair: RegisterPair, v: u16) {
+    pub fn set_register_pair(&mut self, pair: RegisterPair, value: u16) {
         match pair {
-            RegisterPair::AF => (self.a, self.f) = split_u16(v),
-            RegisterPair::BC => (self.b, self.c) = split_u16(v),
-            RegisterPair::DE => (self.d, self.e) = split_u16(v),
-            RegisterPair::HL => (self.h, self.l) = split_u16(v),
-            RegisterPair::PC => self.pc = v,
-            RegisterPair::SP => self.sp = v,
+            RegisterPair::AF => (self.a, self.f) = split_u16(value),
+            RegisterPair::BC => (self.b, self.c) = split_u16(value),
+            RegisterPair::DE => (self.d, self.e) = split_u16(value),
+            RegisterPair::HL => (self.h, self.l) = split_u16(value),
+            RegisterPair::PC => self.pc = value,
+            RegisterPair::SP => self.sp = value,
         }
     }
 
@@ -102,8 +102,8 @@ impl CPU {
     }
 
     #[inline]
-    pub fn set_flag<F: Into<u8>>(&mut self, flag: F, v: bool) {
-        set_bit(&mut self.f, flag, v)
+    pub fn set_flag<F: Into<u8>>(&mut self, flag: F, value: bool) {
+        set_bit(&mut self.f, flag, value)
     }
 
     #[inline]
@@ -116,13 +116,13 @@ impl CPU {
     /// Adds a value and a register together, handling flags and returning the result.
     ///
     /// Note: Does not set the register to the new value, [`CPU::set_register`] must be called seperately.
-    pub fn add_register(&mut self, reg: Register, val: u8) -> u8 {
+    pub fn add_register(&mut self, reg: Register, value: u8) -> u8 {
         let reg_val = self.get_register(reg);
-        let (new, overflow) = reg_val.overflowing_add(val);
+        let (new, overflow) = reg_val.overflowing_add(value);
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, (reg_val & 0xF) + (val & 0xF) > 0xF);
+        self.set_flag(Flag::H, (reg_val & 0xF) + (value & 0xF) > 0xF);
         self.set_flag(Flag::C, overflow);
         return new;
     }
@@ -130,13 +130,13 @@ impl CPU {
     /// Adds a value and a register pair together, handling flags and returning the result.
     ///
     /// Note: Does not set either register pair to the new value, [`CPU::set_register_pair`] must be called seperately.
-    pub fn add_register_pair(&mut self, pair: RegisterPair, val: u16) -> u16 {
+    pub fn add_register_pair(&mut self, pair: RegisterPair, value: u16) -> u16 {
         let reg_val = self.get_register_pair(pair);
-        let (new, overflow) = reg_val.overflowing_add(val);
+        let (new, overflow) = reg_val.overflowing_add(value);
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, (reg_val & 0xFFF) + (val & 0xFFF) > 0xFFF);
+        self.set_flag(Flag::H, (reg_val & 0xFFF) + (value & 0xFFF) > 0xFFF);
         self.set_flag(Flag::C, overflow);
         return new;
     }
@@ -144,13 +144,13 @@ impl CPU {
     /// Subtracts a value from a register, handling flags and returning the result.
     ///
     /// Note: Does not set either register pair to the new value, [`CPU::set_register_pair`] must be called seperately.
-    pub fn sub_register(&mut self, reg: Register, val: u8) -> u8 {
+    pub fn sub_register(&mut self, reg: Register, value: u8) -> u8 {
         let reg_val = self.get_register(reg);
-        let (new, overflow) = reg_val.overflowing_sub(val);
+        let (new, overflow) = reg_val.overflowing_sub(value);
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N, true);
-        self.set_flag(Flag::H, (reg_val & 0xF) + (val & 0xF) > 0xF);
+        self.set_flag(Flag::H, (reg_val & 0xF) + (value & 0xF) > 0xF);
         self.set_flag(Flag::C, overflow);
         return new;
     }
@@ -158,9 +158,9 @@ impl CPU {
     /// Bitwise AND a value and a register together, handling flags and returning the result.
     ///
     /// Note: Does not set either register to the new value, [`CPU::set_register`] must be called seperately.
-    pub fn and_register(&mut self, reg: Register, val: u8) -> u8 {
+    pub fn and_register(&mut self, reg: Register, value: u8) -> u8 {
         let reg_val = self.get_register(reg);
-        let new = reg_val & val;
+        let new = reg_val & value;
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N | Flag::C, false);
@@ -171,9 +171,9 @@ impl CPU {
     /// Bitwise XOR a value and register together, handling flags and returning the result.
     ///
     /// Note: Does not set either register to the new value, [`CPU::set_register`] must be called seperately.
-    pub fn xor_register(&mut self, reg: Register, val: u8) -> u8 {
+    pub fn xor_register(&mut self, reg: Register, value: u8) -> u8 {
         let reg_val = self.get_register(reg);
-        let new = reg_val ^ val;
+        let new = reg_val ^ value;
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N | Flag::H | Flag::C, false);
@@ -183,9 +183,9 @@ impl CPU {
     /// Bitwise OR a value and register together, handling flags and returning the result.
     ///
     /// Note: Does not set either register to the new value, [`CPU::set_register`] must be called seperately.
-    pub fn or_register(&mut self, reg: Register, val: u8) -> u8 {
+    pub fn or_register(&mut self, reg: Register, value: u8) -> u8 {
         let reg_val = self.get_register(reg);
-        let new = reg_val | val;
+        let new = reg_val | value;
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N | Flag::H | Flag::C, false);

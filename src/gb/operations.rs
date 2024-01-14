@@ -1,120 +1,101 @@
+#![allow(non_snake_case)]
+
+use super::{instructions::*, utils::*};
+
 // * LD
 
 /// Load register `r8_2` into register `r8_1`.
-#[macro_export]
-macro_rules! LD_r8_r8 {
-    ($r8_1:expr, $r8_2:expr) => {
-        Instruction::new(
-            format!("LD {:?}, {:?}", $r8_1, $r8_2).as_str(),
-            vec![&|[_, _, _, _], emu| {
-                let v = emu.cpu.get_register($r8_2);
-                emu.cpu.set_register($r8_1, v);
-            }],
-        )
-    };
+pub const fn LD_r8_r8(r8_1: Register, r8_2: Register) -> Instruction {
+    Instruction::new(format!("LD {:?}, {:?}", r8_1, r8_2).as_str(), |emu| {
+        let v = emu.cpu.get_register(r8_2);
+        emu.cpu.set_register(r8_1, v);
+        return InstructionStep::Complete;
+    })
 }
 
 /// Load immediate value `n8` into register `r8`.
-#[macro_export]
-macro_rules! LD_r8_n8 {
-    ($r8:expr) => {
-        Instruction::new(
-            format!("LD {:?}, n8", $r8).as_str(),
-            vec![
-                &|[t8, _, _, _], emu| *t8 = emu.read_u8(RegisterPair::PC),
-                &|[t8, _, _, _], emu| emu.cpu.set_register($r8, *t8),
-            ],
-        )
-    };
+pub const fn LD_r8_n8(r8: Register) -> Instruction {
+    Instruction::new(format!("LD {:?}, n8", r8).as_str(), |emu| {
+        let value = emu.read_pc();
+        return InstructionStep::new(move |emu| {
+            emu.cpu.set_register(r8, value);
+            return InstructionStep::Complete;
+        });
+    })
 }
 
 /// Load the value at address `r16` into register `r8`.
-#[macro_export]
-macro_rules! LD_r8_r16 {
-    ($r8:expr, $r16:expr) => {
-        Instruction::new(
-            format!("LD {:?}, ({:?})", $r8, $r16).as_str(),
-            vec![
-                &|[t8, _, _, _], emu| {
-                    let address = emu.cpu.get_register_pair($r16);
-                    *t8 = emu.bus.read(address);
-                },
-                &|[t8, _, _, _], emu| emu.cpu.set_register($r8, *t8),
-            ],
-        )
-    };
+pub const fn LD_r8_r16(r8: Register, r16: RegisterPair) -> Instruction {
+    Instruction::new(format!("LD {:?}, ({:?})", r8, r16).as_str(), |emu| {
+        let value = emu.read_r16(r16);
+        return InstructionStep::new(move |emu| {
+            emu.cpu.set_register(r8, value);
+            return InstructionStep::Complete;
+        });
+    })
 }
 
 /// Load register `r8` into the location of address `r16`.
-#[macro_export]
-macro_rules! LD_r16_r8 {
-    ($r16:expr, $r8:expr) => {
-        Instruction::new(
-            format!("LD ({:?}), {:?}", $r16, $r8).as_str(),
-            vec![
-                &|[t8, _, _, _], emu| *t8 = emu.cpu.get_register($r8),
-                &|[t8, _, _, _], emu| {
-                    let address = emu.cpu.get_register_pair($r16);
-                    emu.bus.write(address, *t8);
-                },
-            ],
-        )
-    };
-}
-
-/// Load immediate value `n16` into the register pair `r16`.
-#[macro_export]
-macro_rules! LD_r16_n16 {
-    ($r16:expr) => {
-        Instruction::new(
-            format!("LD {:?}, n16", $r16).as_str(),
-            vec![
-                &|[lsb, msb, _, _], emu| *lsb = emu.read_u8(RegisterPair::PC),
-                &|[lsb, msb, _, _], emu| *msb = emu.read_u8(RegisterPair::PC),
-                &|[lsb, msb, _, _], emu| emu.cpu.set_register_pair($r16, join_u16(*lsb, *msb)),
-            ],
-        )
-    };
-}
-
-/// Load the register pair `r16` into the location of immediate address `a16`.
-#[macro_export]
-macro_rules! LD_a16_r16 {
-    ($r16:expr) => {
-        Instruction::new(
-            format!("LD a16, {:?}", $r16).as_str(),
-            vec![
-                &|[a_lsb, a_msb, r_lsb, r_msb], emu| *a_lsb = emu.read_u8(RegisterPair::PC),
-                &|[a_lsb, a_msb, r_lsb, r_msb], emu| *a_msb = emu.read_u8(RegisterPair::PC),
-                &|[a_lsb, a_msb, r_lsb, r_msb], emu| {
-                    (*r_lsb, *r_msb) = split_u16(emu.cpu.get_register_pair($r16))
-                },
-                &|[a_lsb, a_msb, r_lsb, r_msb], emu| {
-                    emu.bus.write(join_u16(*a_lsb, *a_msb), *r_lsb)
-                },
-                &|[a_lsb, a_msb, r_lsb, r_msb], emu| {
-                    emu.bus.write(join_u16(*a_lsb, *a_msb) + 1, *r_msb)
-                },
-            ],
-        )
-    };
+pub const fn LD_r16_r8(r16: RegisterPair, r8: Register) -> Instruction {
+    Instruction::new(format!("LD ({:?}), {:?}", r16, r8).as_str(), |emu| {
+        let value = emu.cpu.get_register(r8);
+        return InstructionStep::new(move |emu| {
+            emu.write_r16(r16, value);
+            return InstructionStep::Complete;
+        });
+    })
 }
 
 /// Load immediate value `n8` into the location of address `r16`.
-#[macro_export]
-macro_rules! LD_r16_n8 {
-    ($r16:expr) => {
-        Instruction::new(
-            format!("LD ({:?}), n8", $r16).as_str(),
-            vec![
-                &|[t8, _, _, _], emu| *t8 = emu.read_u8(RegisterPair::PC),
-                &|[t8, _, _, _], emu| {
-                    let address = emu.cpu.get_register_pair($r16);
-                    emu.bus.write(address, *t8);
-                },
-            ],
-        )
-    };
+pub const fn LD_r16_n8(r16: RegisterPair) -> Instruction {
+    Instruction::new(format!("LD ({:?}), n8", r16).as_str(), |emu| {
+        // ? One bus read per m-cycle.
+        return InstructionStep::new(move |emu| {
+            let value = emu.read_pc();
+            return InstructionStep::new(move |emu| {
+                emu.write_r16(r16, value);
+                return InstructionStep::Complete;
+            });
+        });
+    })
+}
+
+/// Load immediate value `n16` into the register pair `r16`.
+pub const fn LD_r16_n16(r16: RegisterPair) -> Instruction {
+    Instruction::new(format!("LD ({:?}), n16", r16).as_str(), |emu| {
+        // ? One bus read per m-cycle.
+        return InstructionStep::new(move |emu| {
+            let lsb = emu.read_pc();
+            return InstructionStep::new(move |emu| {
+                let msb = emu.read_pc();
+                // The lsb and msb are technically listed as being written seperately, but eh.
+                emu.cpu.set_register_pair(r16, join_u16(lsb, msb));
+                return InstructionStep::Complete;
+            });
+        });
+    })
+}
+
+/// Load the register pair `r16` into the location of immediate addresses `n16` and `n16 + 1`.
+pub const fn LD_n16_r16(r16: RegisterPair) -> Instruction {
+    Instruction::new(format!("LD (n16), {:?}", r16).as_str(), |emu| {
+        // ? One bus read per m-cycle.
+        return InstructionStep::new(move |emu| {
+            let lsb = emu.read_pc();
+            return InstructionStep::new(move |emu| {
+                let msb = emu.read_pc();
+                return InstructionStep::new(move |emu| {
+                    let address = join_u16(lsb, msb);
+                    let (lsb, msb) = split_u16(emu.cpu.get_register_pair(r16));
+                    emu.bus.write(address, lsb);
+                    return InstructionStep::new(move |emu| {
+                        emu.bus.write(address + 1, msb);
+                        return InstructionStep::Complete;
+                    });
+                });
+            });
+        });
+    })
 }
 
 // * INC/DEC
@@ -212,7 +193,7 @@ macro_rules! ADD_r8_r16 {
         Instruction::new(
             format!("ADD {:?}, ({:?})", $r8, $r16).as_str(),
             vec![
-                &|[t8, _, _, _], emu| *t8 = emu.read_u8(RegisterPair::PC),
+                &|[t8, _, _, _], emu| *t8 = emu.read_pc(),
                 &|[t8, _, _, _], emu| {
                     let v = self.cpu.add_register($r8, *t8);
                     emu.cpu.set_register($r8, v);
@@ -251,7 +232,7 @@ macro_rules! JR_i8 {
             format!("ADD {:?}, {:?}", $r16_1, $r16_2).as_str(),
             vec![
                 &|[lsb, msb, t8, _], emu| (*lsb, *msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC)),
-                &|[lsb, msb, t8, _], emu| *t8 = emu.read_u8(RegisterPair::PC),
+                &|[lsb, msb, t8, _], emu| *t8 = emu.read_pc(),
                 &|[lsb, msb, t8, _], emu| *t8 = ,
             ],self.cpu
             //             .set_register_pair(RegisterPair::PC, r.wrapping_add_signed(v.into()));
@@ -260,8 +241,8 @@ macro_rules! JR_i8 {
 }
 
 // /// If flag `c` is set, add the signed immediate value `e8` to the `PC` and jump to it.
-// pub fn JR_c_e8(&mut self, c: Flag) {
-//     let v = self.read_u8(RegisterPair::PC) as i8;
+// pub const fn JR_c_e8(&mut self, c: Flag) {
+//     let v = self.read_pc() as i8;
 //     if self.cpu.get_flag(c) {
 //         let r = self.cpu.get_register_pair(RegisterPair::PC);
 //         self.cpu
@@ -270,8 +251,8 @@ macro_rules! JR_i8 {
 // }
 
 // /// If flag `c` is not set, add the signed immediate value `e8` to the `PC` and jump to it.
-// pub fn JR_nc_e8(&mut self, c: Flag) {
-//     let v = self.read_u8(RegisterPair::PC) as i8;
+// pub const fn JR_nc_e8(&mut self, c: Flag) {
+//     let v = self.read_pc() as i8;
 //     if !self.cpu.get_flag(c) {
 //         let r = self.cpu.get_register_pair(RegisterPair::PC);
 //         self.cpu
@@ -280,13 +261,13 @@ macro_rules! JR_i8 {
 // }
 
 // /// Jump to the immediate address `a16`.
-// pub fn JP_a16(&mut self) {
+// pub const fn JP_a16(&mut self) {
 //     let v = self.read_u16(RegisterPair::PC);
 //     self.cpu.set_register_pair(RegisterPair::PC, v);
 // }
 
 // /// If flag `c` is set, jump to the immediate address `a16`.
-// pub fn JP_c_a16(&mut self, c: Flag) {
+// pub const fn JP_c_a16(&mut self, c: Flag) {
 //     let v = self.read_u16(RegisterPair::PC);
 //     if self.cpu.get_flag(c) {
 //         self.cpu.set_register_pair(RegisterPair::PC, v);
@@ -294,7 +275,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// If flag `c` is not set, jump to the immediate address `a16`.
-// pub fn JP_nc_a16(&mut self, c: Flag) {
+// pub const fn JP_nc_a16(&mut self, c: Flag) {
 //     let v = self.read_u16(RegisterPair::PC);
 //     if !self.cpu.get_flag(c) {
 //         self.cpu.set_register_pair(RegisterPair::PC, v);
@@ -304,21 +285,21 @@ macro_rules! JR_i8 {
 // // * ADC
 
 // /// Add the carry flag, and registers `r8_1` and `r8_2`, storing the result in `r8_1`.
-// pub fn ADC_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn ADC_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2) + self.cpu.get_flag(Flag::C) as u8;
 //     let res = self.cpu.add_register(r8_1, val);
 //     self.cpu.set_register(r8_1, res);
 // }
 
 // /// Add the carry flag, register `r8` and immediate value `n8`, storing the result in `r8`.
-// pub fn ADC_r8_n8(&mut self, r8: Register) {
-//     let val = self.read_u8(RegisterPair::PC) + self.cpu.get_flag(Flag::C) as u8;
+// pub const fn ADC_r8_n8(&mut self, r8: Register) {
+//     let val = self.read_pc() + self.cpu.get_flag(Flag::C) as u8;
 //     let v = self.cpu.add_register(r8, val);
 //     self.cpu.set_register(r8, v);
 // }
 
 // /// Add the carry flag, register `r8` and the value at addresss `r16`, storing the result in `r8`.
-// pub fn ADC_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn ADC_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address) + self.cpu.get_flag(Flag::C) as u8;
 //     let res = self.cpu.add_register(r8, val);
@@ -328,21 +309,21 @@ macro_rules! JR_i8 {
 // // * SUB
 
 // /// Subtract register `r8_2` from register `r8_1`, storing the result in `r8_1`.
-// pub fn SUB_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn SUB_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2);
 //     let v = self.cpu.sub_register(r8_1, val);
 //     self.cpu.set_register(r8_1, v);
 // }
 
 // /// Subtract immediate value `n8` from register `r8`, storing the result in `r8`.
-// pub fn SUB_r8_n8(&mut self, r8: Register) {
-//     let val = self.read_u8(RegisterPair::PC);
+// pub const fn SUB_r8_n8(&mut self, r8: Register) {
+//     let val = self.read_pc();
 //     let v = self.cpu.sub_register(r8, val);
 //     self.cpu.set_register(r8, v);
 // }
 
 // /// Subtract the value at `r16` from register `r8`, storing the result in `r8`.
-// pub fn SUB_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn SUB_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address);
 //     let res = self.cpu.sub_register(r8, val);
@@ -352,21 +333,21 @@ macro_rules! JR_i8 {
 // // * SBC
 
 // /// Subtract the carry flag and register `r8_2` from register `r8_1`, storing the result in `r8_1`.
-// pub fn SBC_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn SBC_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2) + self.cpu.get_flag(Flag::C) as u8;
 //     let res = self.cpu.sub_register(r8_1, val);
 //     self.cpu.set_register(r8_1, res);
 // }
 
 // /// Subtract the carry flag and the immediate value `n8` from register `r8`, storing the result in `r8`.
-// pub fn SBC_r8_n8(&mut self, r8: Register) {
-//     let val = self.read_u8(RegisterPair::PC) + self.cpu.get_flag(Flag::C) as u8;
+// pub const fn SBC_r8_n8(&mut self, r8: Register) {
+//     let val = self.read_pc() + self.cpu.get_flag(Flag::C) as u8;
 //     let res = self.cpu.sub_register(r8, val);
 //     self.cpu.set_register(r8, res);
 // }
 
 // /// Subtract the carry flag and the value at `r16` from register `r8`, storing the result in `r8`.
-// pub fn SBC_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn SBC_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address) + self.cpu.get_flag(Flag::C) as u8;
 //     let res = self.cpu.sub_register(r8, val);
@@ -376,7 +357,7 @@ macro_rules! JR_i8 {
 // // * AND
 
 // /// Bitwise AND registers `r8_1` and `r8_2`, storing the result in `r8_1`.
-// pub fn AND_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn AND_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2);
 //     let v = self.cpu.and_register(r8_1, val);
 //     self.cpu.set_register(r8_1, v);
@@ -387,7 +368,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Bitwise AND register `r8` and the value at address`r16`, storing the result in `r8`.
-// pub fn AND_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn AND_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address);
 //     let v = self.cpu.and_register(r8, val);
@@ -401,7 +382,7 @@ macro_rules! JR_i8 {
 // // * XOR
 
 // /// Bitwise XOR registers `r8_1` and `r8_2`, storing the result in `r8_1`.
-// pub fn XOR_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn XOR_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2);
 //     let v = self.cpu.xor_register(r8_1, val);
 //     self.cpu.set_register(r8_1, v);
@@ -411,7 +392,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Bitwise XOR register `r8` and the value at address`r16`, storing the result in `r8`.
-// pub fn XOR_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn XOR_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address);
 //     let v = self.cpu.xor_register(r8, val);
@@ -424,7 +405,7 @@ macro_rules! JR_i8 {
 // // * OR
 
 // /// Bitwise OR registers `r8_1` and `r8_2`, storing the result in `r8_1`.
-// pub fn OR_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn OR_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2);
 //     let v = self.cpu.or_register(r8_1, val);
 //     self.cpu.set_register(r8_1, v);
@@ -434,7 +415,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Bitwise OR register `r8` and the value at address`r16`, storing the result in `r8`.
-// pub fn OR_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn OR_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address);
 //     let v = self.cpu.or_register(r8, val);
@@ -447,13 +428,13 @@ macro_rules! JR_i8 {
 // // * CP
 
 // /// Subtract register `r8_2` from register `r8_1`, but do not store the result.
-// pub fn CP_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
+// pub const fn CP_r8_r8(&mut self, r8_1: Register, r8_2: Register) {
 //     let val = self.cpu.get_register(r8_2);
 //     let _ = self.cpu.sub_register(r8_1, val);
 // }
 
 // /// Subtract the value at `r16` from register `r8`, but do not store the result.
-// pub fn CP_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
+// pub const fn CP_r8_r16(&mut self, r8: Register, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let val = self.bus.read(address);
 //     let _ = self.cpu.sub_register(r8, val);
@@ -462,13 +443,13 @@ macro_rules! JR_i8 {
 // // * RET, CALL & RST
 
 // /// Return from subroutine.
-// pub fn RET(&mut self) {
+// pub const fn RET(&mut self) {
 //     let v = self.read_u16(RegisterPair::SP);
 //     self.cpu.set_register_pair(RegisterPair::PC, v);
 // }
 
 // /// Call function at the immediate address `a16`.
-// pub fn CALL_a16(&mut self) {
+// pub const fn CALL_a16(&mut self) {
 //     let v = self.read_u16(RegisterPair::PC);
 //     let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
 //     self.write_stack(prev_pc);
@@ -476,7 +457,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// If flag `c` is set, call function at the immediate address `a16`.
-// pub fn CALL_c_a16(&mut self, c: Flag) {
+// pub const fn CALL_c_a16(&mut self, c: Flag) {
 //     let v = self.read_u16(RegisterPair::PC);
 //     if self.cpu.get_flag(c) {
 //         let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
@@ -486,7 +467,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// If flag `c` is not set, call function at the immediate address `a16`.
-// pub fn CALL_nc_a16(&mut self, c: Flag) {
+// pub const fn CALL_nc_a16(&mut self, c: Flag) {
 //     let v = self.read_u16(RegisterPair::PC);
 //     if !self.cpu.get_flag(c) {
 //         let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
@@ -496,7 +477,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Call fixed address `a16`.
-// pub fn RST_a16(&mut self, a16: u16) {
+// pub const fn RST_a16(&mut self, a16: u16) {
 //     let prev_pc = self.cpu.get_register_pair(RegisterPair::PC);
 //     self.write_stack(prev_pc);
 //     self.cpu.set_register_pair(RegisterPair::PC, a16);
@@ -505,13 +486,13 @@ macro_rules! JR_i8 {
 // // * PUSH & POP
 
 // /// Push register pair `r16` into the stack.
-// pub fn PUSH_r16(&mut self, r16: RegisterPair) {
+// pub const fn PUSH_r16(&mut self, r16: RegisterPair) {
 //     let val = self.cpu.get_register_pair(r16);
 //     self.write_stack(val);
 // }
 
 // /// Pop from the stack to register pair `r16`.
-// pub fn POP_r16(&mut self, r16: RegisterPair) {
+// pub const fn POP_r16(&mut self, r16: RegisterPair) {
 //     let v = self.read_u16(RegisterPair::SP);
 //     self.cpu.set_register_pair(r16, v);
 // }
@@ -530,7 +511,7 @@ macro_rules! JR_i8 {
 // // ? CB SRA | Bit 0 | Bit 7
 
 // /// Rotate register `r8` left, setting the carry flag to the previous bit 7.
-// pub fn RLC_r8(&mut self, r8: Register) {
+// pub const fn RLC_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let new_carry = get_bit(&v, 0b1000_0000);
 //     let v = (v << 1) | new_carry as u8;
@@ -542,7 +523,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Rotate register `r8` right, setting the carry flag to the previous bit 0.
-// pub fn RRC_r8(&mut self, r8: Register) {
+// pub const fn RRC_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let new_carry = get_bit(&v, 0b0000_0001);
 //     let v = (v >> 1) | ((new_carry as u8) << 7);
@@ -554,7 +535,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Rotate the value at `r16` left, setting the carry flag to the previous bit 7.
-// pub fn RLC_r16(&mut self, r16: RegisterPair) {
+// pub const fn RLC_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let new_carry = get_bit(&v, 0b1000_0000);
@@ -567,7 +548,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Rotate the value at `r16` right, setting the carry flag to the previous bit 0.
-// pub fn RRC_r16(&mut self, r16: RegisterPair) {
+// pub const fn RRC_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let new_carry = get_bit(&v, 0b0000_0001);
@@ -582,7 +563,7 @@ macro_rules! JR_i8 {
 // // * RL & RR
 
 // /// Rotate register `r8` and the carry flag left.
-// pub fn RL_r8(&mut self, r8: Register) {
+// pub const fn RL_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let prev_carry = self.cpu.get_flag(Flag::C);
 //     let new_carry = get_bit(&v, 0b1000_0000);
@@ -595,7 +576,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Rotate register `r8` and the carry flag right.
-// pub fn RR_r8(&mut self, r8: Register) {
+// pub const fn RR_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let prev_carry = self.cpu.get_flag(Flag::C);
 //     let new_carry = get_bit(&v, 0b0000_0001);
@@ -608,7 +589,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Rotate the value at address `r16` and the carry flag left.
-// pub fn RL_r16(&mut self, r16: RegisterPair) {
+// pub const fn RL_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let prev_carry = self.cpu.get_flag(Flag::C);
@@ -622,7 +603,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Rotate the value at address `r16` and the carry flag right.
-// pub fn RR_r16(&mut self, r16: RegisterPair) {
+// pub const fn RR_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let prev_carry = self.cpu.get_flag(Flag::C);
@@ -638,7 +619,7 @@ macro_rules! JR_i8 {
 // // * SLA, SRA & SRL
 
 // /// Shift register `r8` left arithmetically.
-// pub fn SLA_r8(&mut self, r8: Register) {
+// pub const fn SLA_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let new_carry = get_bit(&v, 0b1000_0000);
 //     let v = v << 1;
@@ -650,7 +631,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Shift register `r8` right arithmetically.
-// pub fn SRA_r8(&mut self, r8: Register) {
+// pub const fn SRA_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let new_carry = get_bit(&v, 0b0000_0001);
 //     let v = (v >> 1) | (v & 0b1000_0000);
@@ -662,7 +643,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Shift register `r8` right logically.
-// pub fn SRL_r8(&mut self, r8: Register) {
+// pub const fn SRL_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let new_carry = get_bit(&v, 0b0000_0001);
 //     let v = v >> 1;
@@ -674,7 +655,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Shift the value at address `r16` left arithmetically.
-// pub fn SLA_r16(&mut self, r16: RegisterPair) {
+// pub const fn SLA_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let new_carry = get_bit(&v, 0b1000_0000);
@@ -687,7 +668,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Shift the value at address `r16` right arithmetically.
-// pub fn SRA_r16(&mut self, r16: RegisterPair) {
+// pub const fn SRA_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let new_carry = get_bit(&v, 0b0000_0001);
@@ -700,7 +681,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Shift the value at address `r16` right logically.
-// pub fn SRL_r16(&mut self, r16: RegisterPair) {
+// pub const fn SRL_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let new_carry = get_bit(&v, 0b0000_0001);
@@ -715,7 +696,7 @@ macro_rules! JR_i8 {
 // // * SWAP & BIT
 
 // /// Swap the upper and lower 4 bits of register `r8`.
-// pub fn SWAP_r8(&mut self, r8: Register) {
+// pub const fn SWAP_r8(&mut self, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     let v = (v << 4) | (v >> 4);
 //     self.cpu.set_register(r8, v);
@@ -724,7 +705,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Swap the upper and lower 4 bits of the value at address `r16`.
-// pub fn SWAP_r16(&mut self, r16: RegisterPair) {
+// pub const fn SWAP_r16(&mut self, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     let v = (v << 4) | (v >> 4);
@@ -734,7 +715,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Set the zero flag if bit `b` of register `r8` is not set.
-// pub fn BIT_b_r8(&mut self, b: u8, r8: Register) {
+// pub const fn BIT_b_r8(&mut self, b: u8, r8: Register) {
 //     let v = self.cpu.get_register(r8);
 //     self.cpu.set_flag(Flag::Z, get_bit(&v, 1 << b));
 //     self.cpu.set_flag(Flag::N, false);
@@ -742,7 +723,7 @@ macro_rules! JR_i8 {
 // }
 
 // /// Set the zero flag if bit `b` of the value at address `r16` is not set.
-// pub fn BIT_b_r16(&mut self, b: u8, r16: RegisterPair) {
+// pub const fn BIT_b_r16(&mut self, b: u8, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let v = self.bus.read(address);
 //     self.cpu.set_flag(Flag::Z, get_bit(&v, 1 << b));
@@ -753,14 +734,14 @@ macro_rules! JR_i8 {
 // // * RES & SET
 
 // /// Set bit `b` of register `r8` to 0.
-// pub fn RES_b_r8(&mut self, b: u8, r8: Register) {
+// pub const fn RES_b_r8(&mut self, b: u8, r8: Register) {
 //     let mut v = self.cpu.get_register(r8);
 //     set_bit(&mut v, 1 << b, false);
 //     self.cpu.set_register(r8, v);
 // }
 
 // /// Set bit `b` of the value at address `r16` to 0.
-// pub fn RES_b_r16(&mut self, b: u8, r16: RegisterPair) {
+// pub const fn RES_b_r16(&mut self, b: u8, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let mut v = self.bus.read(address);
 //     set_bit(&mut v, 1 << b, false);
@@ -768,14 +749,14 @@ macro_rules! JR_i8 {
 // }
 
 // /// Set bit `b` of register `r8` to 1.
-// pub fn SET_b_r8(&mut self, b: u8, r8: Register) {
+// pub const fn SET_b_r8(&mut self, b: u8, r8: Register) {
 //     let mut v = self.cpu.get_register(r8);
 //     set_bit(&mut v, 1 << b, true);
 //     self.cpu.set_register(r8, v);
 // }
 
 // /// Set bit `b` of the value at address `r16` to 1.
-// pub fn SET_b_r16(&mut self, b: u8, r16: RegisterPair) {
+// pub const fn SET_b_r16(&mut self, b: u8, r16: RegisterPair) {
 //     let address = self.cpu.get_register_pair(r16);
 //     let mut v = self.bus.read(address);
 //     set_bit(&mut v, 1 << b, true);

@@ -5,7 +5,7 @@
 // impl GameBoyEmulator {
 //     /// Run immediate prefixed operation `n8`.
 //     pub fn PREFIX_n8(&mut self) {
-//         let op = self.read_u8(RegisterPair::PC);
+//         let op = self.read_pc();
 //         match op {
 //             // * 0x0_
 //             // Rotate register `B` left, setting the carry flag to the previous bit 7.

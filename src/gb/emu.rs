@@ -27,37 +27,34 @@ impl GameBoyEmulator {
             return;
         }
 
-        let next_instruction = self.read_u8(RegisterPair::PC);
-        self.run_instruction(next_instruction);
+        let next_instruction = self.read_pc();
+        // ! exec instruction !
 
         // TODO: Rendering, input, audio, interupts
 
         self.render(buffer);
     }
 
-    /// Read and return a byte from address `r16`, then increment `r16`.
+    /// Read and return a byte from the address of the `PC`, then increment `PC`.
     #[inline]
-    pub fn read_u8(&mut self, r16: RegisterPair) -> u8 {
-        let address = self.cpu.get_register_pair(r16);
-        self.cpu.increment_register_pair(r16);
+    pub fn read_pc(&mut self) -> u8 {
+        let address = self.cpu.get_register_pair(RegisterPair::PC);
+        self.cpu.inc_register_pair(RegisterPair::PC);
         return self.bus.read(address);
     }
 
-    /// Run [`GameBoyEmulator::read_u8`] twice, returning the two bytes and incrementing `r16` twice.
+    /// Read a byte from the address `r16`.
     #[inline]
-    pub fn read_u16(&mut self, r16: RegisterPair) -> u16 {
-        return join_u16(self.read_u8(r16), self.read_u8(r16));
+    pub fn read_r16(&mut self, r16: RegisterPair) -> u8 {
+        let address = self.cpu.get_register_pair(r16);
+        return self.bus.read(address);
     }
 
-    /// Write a value to the stack, decrementing the `SP` twice.
-    pub fn write_stack(&mut self, val: u16) {
-        let (lsb, msb) = split_u16(val);
-        self.cpu.decrement_register_pair(RegisterPair::SP);
-        let address = self.cpu.get_register_pair(RegisterPair::SP);
-        self.bus.write(address, msb);
-        self.cpu.decrement_register_pair(RegisterPair::SP);
-        let address = self.cpu.get_register_pair(RegisterPair::SP);
-        self.bus.write(address, lsb);
+    /// Write a byte to the address `r16`.
+    #[inline]
+    pub fn write_r16(&mut self, r16: RegisterPair, value: u8) {
+        let address = self.cpu.get_register_pair(r16);
+        return self.bus.write(address, value);
     }
 
     pub fn render(&mut self, buffer: &mut RenderBuffer) {}
