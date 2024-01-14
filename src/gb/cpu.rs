@@ -195,7 +195,7 @@ impl CPU {
     // * INC/DECrement
 
     /// Adds one to the register, managing flags correctly.
-    pub fn increment_register(&mut self, reg: Register) {
+    pub fn inc_register(&mut self, reg: Register) {
         let v = self.get_register(reg) + 1;
         self.set_register(reg, v);
 
@@ -205,13 +205,13 @@ impl CPU {
     }
 
     /// Adds one to the register pair, managing flags correctly.
-    pub fn increment_register_pair(&mut self, pair: RegisterPair) {
+    pub fn inc_register_pair(&mut self, pair: RegisterPair) {
         let v = self.get_register_pair(pair) + 1;
         self.set_register_pair(pair, v);
     }
 
     /// Subtracts one from the register, managing flags correctly.
-    pub fn decrement_register(&mut self, reg: Register) {
+    pub fn dec_register(&mut self, reg: Register) {
         let v = self.get_register(reg) - 1;
         self.set_register(reg, v);
 
@@ -221,7 +221,7 @@ impl CPU {
     }
 
     /// Subtracts one to the register pair, managing flags correctly.
-    pub fn decrement_register_pair(&mut self, pair: RegisterPair) {
+    pub fn dec_register_pair(&mut self, pair: RegisterPair) {
         let v = self.get_register_pair(pair) - 1;
         self.set_register_pair(pair, v);
     }

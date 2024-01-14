@@ -5,7 +5,7 @@ byte_field! {
     /// [pandocs](https://gbdev.io/pandocs/The_Cartridge_Header.html).
     #[derive(Debug)]
     pub CartridgeHeader;
-    pub init_rom:          256,
+    pub restart_vectors:   256,
     pub entry_point:       4,
     pub nintendo_logo:     48,
     pub title:             16,

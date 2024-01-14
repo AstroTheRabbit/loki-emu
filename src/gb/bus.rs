@@ -1,7 +1,7 @@
 use crate::byte_field;
 
 use super::cartridge::CartridgeHeader;
-use super::graphics::{VRAM, OAM};
+use super::graphics::{OAM, VRAM};
 
 static mut BOOT_ROM: [u8; 256] = *include_bytes!("../../roms/GB Boot ROM.bin");
 
@@ -38,14 +38,13 @@ byte_field! {
 }
 
 impl Bus {
-
     fn get_mut(&mut self, address: u16) -> &mut u8 {
         match address {
             0x0000..=0x00FF => match self.read(0xFF50) {
                 // ? Boot ROM is still mapped.
-                0x00 => unsafe { &mut BOOT_ROM[address as usize] }
+                0x00 => unsafe { &mut BOOT_ROM[address as usize] },
                 // ? Boot ROM is has been unmapped.
-                _ => &mut self.cartridge_header[address as usize]
+                _ => &mut self.cartridge_header[address as usize],
             },
             0x0100..=0x014F => &mut self.cartridge_header[address as usize],
             0x0150..=0x3FFF => todo!("GB - Cartridge ROM"),

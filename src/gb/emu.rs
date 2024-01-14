@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use softbuffer::Buffer;
+use std::rc::Rc;
 use winit::window::Window;
 use winit_input_helper::WinitInputHelper;
 
@@ -17,14 +17,19 @@ pub struct GameBoyEmulator {
 }
 
 impl GameBoyEmulator {
-    pub fn update(&mut self, window: Rc<Window>, input: &mut WinitInputHelper, buffer: &mut RenderBuffer) {
+    pub fn update(
+        &mut self,
+        window: Rc<Window>,
+        input: &mut WinitInputHelper,
+        buffer: &mut RenderBuffer,
+    ) {
         if self.is_halted {
             return;
         }
 
         let next_instruction = self.read_u8(RegisterPair::PC);
         self.run_instruction(next_instruction);
-        
+
         // TODO: Rendering, input, audio, interupts
 
         self.render(buffer);
@@ -55,7 +60,5 @@ impl GameBoyEmulator {
         self.bus.write(address, lsb);
     }
 
-    pub fn render(&mut self, buffer: &mut RenderBuffer) {
-
-    }
+    pub fn render(&mut self, buffer: &mut RenderBuffer) {}
 }

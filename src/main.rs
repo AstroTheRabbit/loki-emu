@@ -1,13 +1,21 @@
 pub mod byte_field;
 pub mod gb;
 
-use gb::{cartridge::CartridgeHeader, utils::IME, cpu::CPU, emu::GameBoyEmulator, bus::{Bus, WRAM, IORegisters, HRAM}, graphics::{VRAM, OAM}};
-use softbuffer::{Context, Surface, Buffer};
+use gb::{
+    bus::{Bus, IORegisters, HRAM, WRAM},
+    cartridge::CartridgeHeader,
+    cpu::CPU,
+    emu::GameBoyEmulator,
+    graphics::{OAM, VRAM},
+    utils::IME,
+};
+use softbuffer::{Buffer, Context, Surface};
 use std::{num::NonZeroU32, rc::Rc, time::Instant};
 use winit::{
+    dpi::PhysicalSize,
     error::EventLoopError,
     event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder, Window}, dpi::PhysicalSize,
+    window::{Window, WindowBuilder},
 };
 use winit_input_helper::WinitInputHelper;
 
@@ -47,7 +55,13 @@ fn main() -> Result<(), EventLoopError> {
         },
     };
 
-    window.set_title(format!("Loki Emulator - {}", emu.bus.cartridge_header.get_title().unwrap()).as_str());
+    window.set_title(
+        format!(
+            "Loki Emulator - {}",
+            emu.bus.cartridge_header.get_title().unwrap()
+        )
+        .as_str(),
+    );
 
     event_loop.run(|event, elwt| {
         elwt.set_control_flow(ControlFlow::Poll);
