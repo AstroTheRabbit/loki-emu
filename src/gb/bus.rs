@@ -40,12 +40,14 @@ byte_field! {
 impl Bus {
     fn get_mut(&mut self, address: u16) -> Option<&mut u8> {
         match address {
-            0x0000..=0x00FF => if self.read(0xFF50) == 0x00 {
-                // ? Boot ROM is still mapped.
-                unsafe { Some(&mut BOOT_ROM[address as usize]) }
-            } else {
-                Some(&mut self.cartridge_header[address as usize])
-            },
+            0x0000..=0x00FF => {
+                if self.read(0xFF50) == 0x00 {
+                    // ? Boot ROM is still mapped.
+                    unsafe { Some(&mut BOOT_ROM[address as usize]) }
+                } else {
+                    Some(&mut self.cartridge_header[address as usize])
+                }
+            }
             0x0100..=0x014F => Some(&mut self.cartridge_header[address as usize]),
             0x0150..=0x3FFF => todo!("GB - Cartridge ROM"),
             0x4000..=0x7FFF => todo!("GB - Swappable ROM"),

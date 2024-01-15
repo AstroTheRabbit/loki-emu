@@ -5,8 +5,9 @@ use super::instructions::*;
 /// Run immediate prefixed operation `n8`.
 pub fn PREFIX_n8() -> Instruction {
     Instruction::new("PREFIX".to_string(), |emu| {
-        let op = emu.read_pc();
-        return InstructionStep::new(|emu| {
+        let _op = emu.read_pc();
+        InstructionStep::new(move |_emu| {
+            // todo!("GB - Prefixed instructions");
             // match op {
             //     // * 0x0_
             //     // Rotate register `B` left, setting the carry flag to the previous bit 7.
@@ -537,7 +538,7 @@ pub fn PREFIX_n8() -> Instruction {
             //     // Set bit 7 of register `A` to 1.
             //     0xFF => self.SET_b_r8(7, Register::A),
             // }
-            return InstructionStep::Complete;
-        });
+            InstructionStep::Complete
+        })
     })
 }

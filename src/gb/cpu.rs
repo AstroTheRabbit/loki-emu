@@ -24,10 +24,6 @@ pub struct CPU {
     pc: u16,
     /// Stack pointer
     sp: u16,
-    /// Has a `HALT` instruction been called?
-    halted: bool,
-    /// Total number of CPU cycles
-    total_cycles: usize,
 }
 
 impl CPU {
@@ -43,8 +39,6 @@ impl CPU {
             l: 0x4D,
             pc: 0x0000,
             sp: 0xFFFE,
-            halted: false,
-            total_cycles: 0,
         }
     }
 
@@ -124,7 +118,7 @@ impl CPU {
         self.set_flag(Flag::N, false);
         self.set_flag(Flag::H, (reg_val & 0xF) + (value & 0xF) > 0xF);
         self.set_flag(Flag::C, overflow);
-        return new;
+        new
     }
 
     /// Adds a value and a register pair together, handling flags and returning the result.
@@ -138,7 +132,7 @@ impl CPU {
         self.set_flag(Flag::N, false);
         self.set_flag(Flag::H, (reg_val & 0xFFF) + (value & 0xFFF) > 0xFFF);
         self.set_flag(Flag::C, overflow);
-        return new;
+        new
     }
 
     /// Subtracts a value from a register, handling flags and returning the result.
@@ -152,7 +146,7 @@ impl CPU {
         self.set_flag(Flag::N, true);
         self.set_flag(Flag::H, (reg_val & 0xF) + (value & 0xF) > 0xF);
         self.set_flag(Flag::C, overflow);
-        return new;
+        new
     }
 
     /// Bitwise AND a value and a register together, handling flags and returning the result.
@@ -165,7 +159,7 @@ impl CPU {
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N | Flag::C, false);
         self.set_flag(Flag::H, true);
-        return new;
+        new
     }
 
     /// Bitwise XOR a value and register together, handling flags and returning the result.
@@ -177,7 +171,7 @@ impl CPU {
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N | Flag::H | Flag::C, false);
-        return new;
+        new
     }
 
     /// Bitwise OR a value and register together, handling flags and returning the result.
@@ -189,7 +183,7 @@ impl CPU {
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N | Flag::H | Flag::C, false);
-        return new;
+        new
     }
 
     // * INC/DECrement

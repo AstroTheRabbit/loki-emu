@@ -7,10 +7,10 @@ use gb::{
     cpu::CPU,
     emu::GameBoyEmulator,
     graphics::{OAM, VRAM},
-    utils::IME,
+    utils::IME, instructions::Instruction,
 };
 use softbuffer::{Buffer, Context, Surface};
-use std::{num::NonZeroU32, rc::Rc, time::Instant};
+use std::{num::NonZeroU32, rc::Rc};
 use winit::{
     dpi::PhysicalSize,
     error::EventLoopError,
@@ -43,7 +43,7 @@ fn main() -> Result<(), EventLoopError> {
         cpu: CPU::new_init(),
         ime: IME::Disabled,
         is_halted: false,
-        current_cycles: 0,
+        current_instruction: Instruction::default(),
         bus: Bus {
             cartridge_header: CartridgeHeader::load_from_file("./roms/Tetris.gb").unwrap(),
             vram: VRAM::new_empty(),
@@ -51,7 +51,7 @@ fn main() -> Result<(), EventLoopError> {
             oam: OAM::new_empty(),
             io_registers: IORegisters::new_empty(),
             hram: HRAM::new_empty(),
-            ie_register: 0,
+            ie_register: 0x00,
         },
     };
 

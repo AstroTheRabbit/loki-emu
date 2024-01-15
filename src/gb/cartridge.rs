@@ -23,7 +23,7 @@ byte_field! {
 
 impl CartridgeHeader {
     pub fn read(&self, address: u16) -> u8 {
-        return self[(address - 0x0100) as usize];
+        self[(address - 0x0100) as usize]
     }
 
     #[allow(unused_variables)]
@@ -41,7 +41,7 @@ impl CartridgeHeader {
     /// Returns the game's title.
     pub fn get_title(&self) -> Result<String, FromUtf8Error> {
         let array = self.title.iter().filter(|&c| *c != 0x00).copied().collect();
-        return String::from_utf8(array);
+        String::from_utf8(array)
     }
 
     /// Returns the cartridge's ROM size in bytes.
