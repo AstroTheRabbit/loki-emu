@@ -196,7 +196,7 @@ impl CPU {
 
     /// Adds one to the register, managing flags correctly.
     pub fn inc_register(&mut self, reg: Register) {
-        let v = self.get_register(reg) + 1;
+        let v = self.get_register(reg).wrapping_add(1);
         self.set_register(reg, v);
 
         self.set_flag(Flag::Z, v == 0);
@@ -206,13 +206,13 @@ impl CPU {
 
     /// Adds one to the register pair, managing flags correctly.
     pub fn inc_register_pair(&mut self, pair: RegisterPair) {
-        let v = self.get_register_pair(pair) + 1;
+        let v = self.get_register_pair(pair).wrapping_add(1);
         self.set_register_pair(pair, v);
     }
 
     /// Subtracts one from the register, managing flags correctly.
     pub fn dec_register(&mut self, reg: Register) {
-        let v = self.get_register(reg) - 1;
+        let v = self.get_register(reg).wrapping_sub(1);
         self.set_register(reg, v);
 
         self.set_flag(Flag::Z, v == 0);
@@ -222,7 +222,7 @@ impl CPU {
 
     /// Subtracts one to the register pair, managing flags correctly.
     pub fn dec_register_pair(&mut self, pair: RegisterPair) {
-        let v = self.get_register_pair(pair) - 1;
+        let v = self.get_register_pair(pair).wrapping_sub(1);
         self.set_register_pair(pair, v);
     }
 }

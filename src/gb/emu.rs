@@ -43,6 +43,22 @@ impl GameBoyEmulator {
         return self.bus.read(address);
     }
 
+    /// Read and return a byte from the address of the `SP`, then increment `SP`.
+    #[inline]
+    pub fn read_sp(&mut self) -> u8 {
+        let address = self.cpu.get_register_pair(RegisterPair::SP);
+        self.cpu.inc_register_pair(RegisterPair::SP);
+        return self.bus.read(address);
+    }
+
+    /// Decrement the `SP`, then write a byte to its address.
+    #[inline]
+    pub fn write_sp(&mut self, value: u8) {
+        self.cpu.dec_register_pair(RegisterPair::SP);
+        let address = self.cpu.get_register_pair(RegisterPair::SP);
+        return self.bus.write(address, value);
+    }
+
     /// Read a byte from the address `r16`.
     #[inline]
     pub fn read_r16(&mut self, r16: RegisterPair) -> u8 {

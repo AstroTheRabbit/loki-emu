@@ -8,3 +8,4 @@ pub mod instructions;
 pub mod operations;
 pub mod prefixed_instructions;
 pub mod utils;
+pub mod prefixed_operations;
