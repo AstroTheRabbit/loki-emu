@@ -1,544 +1,287 @@
 #![allow(non_snake_case)]
 
-use super::instructions::*;
+use super::{instructions::*, utils::*, prefixed_operations::*};
 
 /// Run immediate prefixed operation `n8`.
 pub fn PREFIX_n8() -> Instruction {
-    Instruction::new("PREFIX".to_string(), |emu| {
-        let _op = emu.read_pc();
-        InstructionStep::new(move |_emu| {
-            // todo!("GB - Prefixed instructions");
-            // match op {
-            //     // * 0x0_
-            //     // Rotate register `B` left, setting the carry flag to the previous bit 7.
-            //     0x00 => self.RLC_r8(Register::B),
-            //     // Rotate register `C` left, setting the carry flag to the previous bit 7.
-            //     0x01 => self.RLC_r8(Register::C),
-            //     // Rotate register `D` left, setting the carry flag to the previous bit 7.
-            //     0x02 => self.RLC_r8(Register::D),
-            //     // Rotate register `E` left, setting the carry flag to the previous bit 7.
-            //     0x03 => self.RLC_r8(Register::E),
-            //     // Rotate register `H` left, setting the carry flag to the previous bit 7.
-            //     0x04 => self.RLC_r8(Register::H),
-            //     // Rotate register `L` left, setting the carry flag to the previous bit 7.
-            //     0x05 => self.RLC_r8(Register::L),
-            //     // Rotate the value at address `HL` left, setting the carry flag to the previous bit 7.
-            //     0x06 => self.RLC_r16(RegisterPair::HL),
-            //     // Rotate register `A` left, setting the carry flag to the previous bit 7.
-            //     0x07 => self.RLC_r8(Register::A),
-            //     // Rotate register `B` right, setting the carry flag to the previous bit 0.
-            //     0x08 => self.RRC_r8(Register::B),
-            //     // Rotate register `C` right, setting the carry flag to the previous bit 0.
-            //     0x09 => self.RRC_r8(Register::C),
-            //     // Rotate register `D` right, setting the carry flag to the previous bit 0.
-            //     0x0A => self.RRC_r8(Register::D),
-            //     // Rotate register `E` right, setting the carry flag to the previous bit 0.
-            //     0x0B => self.RRC_r8(Register::E),
-            //     // Rotate register `H` right, setting the carry flag to the previous bit 0.
-            //     0x0C => self.RRC_r8(Register::H),
-            //     // Rotate register `L` right, setting the carry flag to the previous bit 0.
-            //     0x0D => self.RRC_r8(Register::L),
-            //     // Rotate the value at address `HL` right, setting the carry flag to the previous bit 0.
-            //     0x0E => self.RRC_r16(RegisterPair::HL),
-            //     // Rotate register `A` right, setting the carry flag to the previous bit 0.
-            //     0x0F => self.RRC_r8(Register::A),
-            //     // * 0x1_
-            //     // Rotate register `B` and the carry flag left.
-            //     0x10 => self.RL_r8(Register::B),
-            //     // Rotate register `C` and the carry flag left.
-            //     0x11 => self.RL_r8(Register::C),
-            //     // Rotate register `D` and the carry flag left.
-            //     0x12 => self.RL_r8(Register::D),
-            //     // Rotate register `E` and the carry flag left.
-            //     0x13 => self.RL_r8(Register::E),
-            //     // Rotate register `H` and the carry flag left.
-            //     0x14 => self.RL_r8(Register::H),
-            //     // Rotate register `L` and the carry flag left.
-            //     0x15 => self.RL_r8(Register::L),
-            //     // Rotate the value at address `HL` and the carry flag left.
-            //     0x16 => self.RL_r16(RegisterPair::HL),
-            //     // Rotate register `A` and the carry flag left.
-            //     0x17 => self.RL_r8(Register::A),
-            //     // Rotate register `B` and the carry flag right.
-            //     0x18 => self.RR_r8(Register::B),
-            //     // Rotate register `C` and the carry flag right.
-            //     0x19 => self.RR_r8(Register::C),
-            //     // Rotate register `D` and the carry flag right.
-            //     0x1A => self.RR_r8(Register::D),
-            //     // Rotate register `E` and the carry flag right.
-            //     0x1B => self.RR_r8(Register::E),
-            //     // Rotate register `H` and the carry flag right.
-            //     0x1C => self.RR_r8(Register::H),
-            //     // Rotate register `L` and the carry flag right.
-            //     0x1D => self.RR_r8(Register::L),
-            //     // Rotate the value at address `HL` and the carry flag right.
-            //     0x1E => self.RR_r16(RegisterPair::HL),
-            //     // Rotate register `A` and the carry flag right.
-            //     0x1F => self.RR_r8(Register::A),
-            //     // * 0x2_
-            //     // Shift register `B` left arithmetically.
-            //     0x20 => self.SLA_r8(Register::B),
-            //     // Shift register `C` left arithmetically.
-            //     0x21 => self.SLA_r8(Register::C),
-            //     // Shift register `D` left arithmetically.
-            //     0x22 => self.SLA_r8(Register::D),
-            //     // Shift register `E` left arithmetically.
-            //     0x23 => self.SLA_r8(Register::E),
-            //     // Shift register `H` left arithmetically.
-            //     0x24 => self.SLA_r8(Register::H),
-            //     // Shift register `L` left arithmetically.
-            //     0x25 => self.SLA_r8(Register::L),
-            //     // Shift the value at address `HL` left arithmetically.
-            //     0x26 => self.SLA_r16(RegisterPair::HL),
-            //     // Shift register `A` left arithmetically.
-            //     0x27 => self.SLA_r8(Register::A),
-            //     // Shift register `B` right arithmetically.
-            //     0x28 => self.SRA_r8(Register::B),
-            //     // Shift register `C` right arithmetically.
-            //     0x29 => self.SRA_r8(Register::C),
-            //     // Shift register `D` right arithmetically.
-            //     0x2A => self.SRA_r8(Register::D),
-            //     // Shift register `E` right arithmetically.
-            //     0x2B => self.SRA_r8(Register::E),
-            //     // Shift register `H` right arithmetically.
-            //     0x2C => self.SRA_r8(Register::H),
-            //     // Shift register `L` right arithmetically.
-            //     0x2D => self.SRA_r8(Register::L),
-            //     // Shift the value at address `HL` right arithmetically.
-            //     0x2E => self.SRA_r16(RegisterPair::HL),
-            //     // Shift register `A` right arithmetically.
-            //     0x2F => self.SRA_r8(Register::A),
-            //     // * 0x3_
-            //     // Swap the upper and lower 4 bits of register `B`
-            //     0x30 => self.SWAP_r8(Register::B),
-            //     // Swap the upper and lower 4 bits of register `C`
-            //     0x31 => self.SWAP_r8(Register::C),
-            //     // Swap the upper and lower 4 bits of register `D`
-            //     0x32 => self.SWAP_r8(Register::D),
-            //     // Swap the upper and lower 4 bits of register `E`
-            //     0x33 => self.SWAP_r8(Register::E),
-            //     // Swap the upper and lower 4 bits of register `H`
-            //     0x34 => self.SWAP_r8(Register::H),
-            //     // Swap the upper and lower 4 bits of register `L`
-            //     0x35 => self.SWAP_r8(Register::L),
-            //     // Swap the upper and lower 4 bits of the value at address `HL`
-            //     0x36 => self.SWAP_r16(RegisterPair::HL),
-            //     // Swap the upper and lower 4 bits of register `A`
-            //     0x37 => self.SWAP_r8(Register::A),
-            //     // Shift register `B` right logically.
-            //     0x38 => self.SRL_r8(Register::B),
-            //     // Shift register `C` right logically.
-            //     0x39 => self.SRL_r8(Register::C),
-            //     // Shift register `D` right logically.
-            //     0x3A => self.SRL_r8(Register::D),
-            //     // Shift register `E` right logically.
-            //     0x3B => self.SRL_r8(Register::E),
-            //     // Shift register `H` right logically.
-            //     0x3C => self.SRL_r8(Register::H),
-            //     // Shift register `L` right logically.
-            //     0x3D => self.SRL_r8(Register::L),
-            //     // Shift the value at address `HL` right logically.
-            //     0x3E => self.SRL_r16(RegisterPair::HL),
-            //     // Shift register `A` right logically.
-            //     0x3F => self.SRL_r8(Register::A),
-            //     // * 0x4_
-            //     // Set the zero flag if bit 0 of register `B` is not set.
-            //     0x40 => self.BIT_b_r8(0, Register::B),
-            //     // Set the zero flag if bit 0 of register `C` is not set.
-            //     0x41 => self.BIT_b_r8(0, Register::C),
-            //     // Set the zero flag if bit 0 of register `D` is not set.
-            //     0x42 => self.BIT_b_r8(0, Register::D),
-            //     // Set the zero flag if bit 0 of register `E` is not set.
-            //     0x43 => self.BIT_b_r8(0, Register::E),
-            //     // Set the zero flag if bit 0 of register `H` is not set.
-            //     0x44 => self.BIT_b_r8(0, Register::H),
-            //     // Set the zero flag if bit 0 of register `L` is not set.
-            //     0x45 => self.BIT_b_r8(0, Register::L),
-            //     // Set the zero flag if bit 0 of the value at address `HL` is not set.
-            //     0x46 => self.BIT_b_r16(0, RegisterPair::HL),
-            //     // Set the zero flag if bit 0 of register `A` is not set.
-            //     0x47 => self.BIT_b_r8(0, Register::A),
-            //     // Set the zero flag if bit 1 of register `B` is not set.
-            //     0x48 => self.BIT_b_r8(1, Register::B),
-            //     // Set the zero flag if bit 1 of register `C` is not set.
-            //     0x49 => self.BIT_b_r8(1, Register::C),
-            //     // Set the zero flag if bit 1 of register `D` is not set.
-            //     0x4A => self.BIT_b_r8(1, Register::D),
-            //     // Set the zero flag if bit 1 of register `E` is not set.
-            //     0x4B => self.BIT_b_r8(1, Register::E),
-            //     // Set the zero flag if bit 1 of register `H` is not set.
-            //     0x4C => self.BIT_b_r8(1, Register::H),
-            //     // Set the zero flag if bit 1 of register `L` is not set.
-            //     0x4D => self.BIT_b_r8(1, Register::L),
-            //     // Set the zero flag if bit 1 of the value at address `HL` is not set.
-            //     0x4E => self.BIT_b_r16(1, RegisterPair::HL),
-            //     // Set the zero flag if bit 1 of register `A` is not set.
-            //     0x4F => self.BIT_b_r8(1, Register::A),
-            //     // * 0x5_
-            //     // Set the zero flag if bit 2 of register `B` is not set.
-            //     0x50 => self.BIT_b_r8(2, Register::B),
-            //     // Set the zero flag if bit 2 of register `C` is not set.
-            //     0x51 => self.BIT_b_r8(2, Register::C),
-            //     // Set the zero flag if bit 2 of register `D` is not set.
-            //     0x52 => self.BIT_b_r8(2, Register::D),
-            //     // Set the zero flag if bit 2 of register `E` is not set.
-            //     0x53 => self.BIT_b_r8(2, Register::E),
-            //     // Set the zero flag if bit 2 of register `H` is not set.
-            //     0x54 => self.BIT_b_r8(2, Register::H),
-            //     // Set the zero flag if bit 2 of register `L` is not set.
-            //     0x55 => self.BIT_b_r8(2, Register::L),
-            //     // Set the zero flag if bit 2 of the value at address `HL` is not set.
-            //     0x56 => self.BIT_b_r16(2, RegisterPair::HL),
-            //     // Set the zero flag if bit 2 of register `A` is not set.
-            //     0x57 => self.BIT_b_r8(2, Register::A),
-            //     // Set the zero flag if bit 3 of register `B` is not set.
-            //     0x58 => self.BIT_b_r8(3, Register::B),
-            //     // Set the zero flag if bit 3 of register `C` is not set.
-            //     0x59 => self.BIT_b_r8(3, Register::C),
-            //     // Set the zero flag if bit 3 of register `D` is not set.
-            //     0x5A => self.BIT_b_r8(3, Register::D),
-            //     // Set the zero flag if bit 3 of register `E` is not set.
-            //     0x5B => self.BIT_b_r8(3, Register::E),
-            //     // Set the zero flag if bit 3 of register `H` is not set.
-            //     0x5C => self.BIT_b_r8(3, Register::H),
-            //     // Set the zero flag if bit 3 of register `L` is not set.
-            //     0x5D => self.BIT_b_r8(3, Register::L),
-            //     // Set the zero flag if bit 3 of the value at address `HL` is not set.
-            //     0x5E => self.BIT_b_r16(3, RegisterPair::HL),
-            //     // Set the zero flag if bit 3 of register `A` is not set.
-            //     0x5F => self.BIT_b_r8(3, Register::A),
-            //     // * 0x6_
-            //     // Set the zero flag if bit 4 of register `B` is not set.
-            //     0x60 => self.BIT_b_r8(4, Register::B),
-            //     // Set the zero flag if bit 4 of register `C` is not set.
-            //     0x61 => self.BIT_b_r8(4, Register::C),
-            //     // Set the zero flag if bit 4 of register `D` is not set.
-            //     0x62 => self.BIT_b_r8(4, Register::D),
-            //     // Set the zero flag if bit 4 of register `E` is not set.
-            //     0x63 => self.BIT_b_r8(4, Register::E),
-            //     // Set the zero flag if bit 4 of register `H` is not set.
-            //     0x64 => self.BIT_b_r8(4, Register::H),
-            //     // Set the zero flag if bit 4 of register `L` is not set.
-            //     0x65 => self.BIT_b_r8(4, Register::L),
-            //     // Set the zero flag if bit 4 of the value at address `HL` is not set.
-            //     0x66 => self.BIT_b_r16(4, RegisterPair::HL),
-            //     // Set the zero flag if bit 4 of register `A` is not set.
-            //     0x67 => self.BIT_b_r8(4, Register::A),
-            //     // Set the zero flag if bit 5 of register `B` is not set.
-            //     0x68 => self.BIT_b_r8(5, Register::B),
-            //     // Set the zero flag if bit 5 of register `C` is not set.
-            //     0x69 => self.BIT_b_r8(5, Register::C),
-            //     // Set the zero flag if bit 5 of register `D` is not set.
-            //     0x6A => self.BIT_b_r8(5, Register::D),
-            //     // Set the zero flag if bit 5 of register `E` is not set.
-            //     0x6B => self.BIT_b_r8(5, Register::E),
-            //     // Set the zero flag if bit 5 of register `H` is not set.
-            //     0x6C => self.BIT_b_r8(5, Register::H),
-            //     // Set the zero flag if bit 5 of register `L` is not set.
-            //     0x6D => self.BIT_b_r8(5, Register::L),
-            //     // Set the zero flag if bit 5 of the value at address `HL` is not set.
-            //     0x6E => self.BIT_b_r16(5, RegisterPair::HL),
-            //     // Set the zero flag if bit 5 of register `A` is not set.
-            //     0x6F => self.BIT_b_r8(5, Register::A),
-            //     // * 0x7_
-            //     // Set the zero flag if bit 6 of register `B` is not set.
-            //     0x70 => self.BIT_b_r8(6, Register::B),
-            //     // Set the zero flag if bit 6 of register `C` is not set.
-            //     0x71 => self.BIT_b_r8(6, Register::C),
-            //     // Set the zero flag if bit 6 of register `D` is not set.
-            //     0x72 => self.BIT_b_r8(6, Register::D),
-            //     // Set the zero flag if bit 6 of register `E` is not set.
-            //     0x73 => self.BIT_b_r8(6, Register::E),
-            //     // Set the zero flag if bit 6 of register `H` is not set.
-            //     0x74 => self.BIT_b_r8(6, Register::H),
-            //     // Set the zero flag if bit 6 of register `L` is not set.
-            //     0x75 => self.BIT_b_r8(6, Register::L),
-            //     // Set the zero flag if bit 6 of the value at address `HL` is not set.
-            //     0x76 => self.BIT_b_r16(6, RegisterPair::HL),
-            //     // Set the zero flag if bit 6 of register `A` is not set.
-            //     0x77 => self.BIT_b_r8(6, Register::A),
-            //     // Set the zero flag if bit 7 of register `B` is not set.
-            //     0x78 => self.BIT_b_r8(7, Register::B),
-            //     // Set the zero flag if bit 7 of register `C` is not set.
-            //     0x79 => self.BIT_b_r8(7, Register::C),
-            //     // Set the zero flag if bit 7 of register `D` is not set.
-            //     0x7A => self.BIT_b_r8(7, Register::D),
-            //     // Set the zero flag if bit 7 of register `E` is not set.
-            //     0x7B => self.BIT_b_r8(7, Register::E),
-            //     // Set the zero flag if bit 7 of register `H` is not set.
-            //     0x7C => self.BIT_b_r8(7, Register::H),
-            //     // Set the zero flag if bit 7 of register `L` is not set.
-            //     0x7D => self.BIT_b_r8(7, Register::L),
-            //     // Set the zero flag if bit 7 of the value at address `HL` is not set.
-            //     0x7E => self.BIT_b_r16(7, RegisterPair::HL),
-            //     // Set the zero flag if bit 7 of register `A` is not set.
-            //     0x7F => self.BIT_b_r8(7, Register::A),
-            //     // * 0x8_
-            //     // Set bit 0 of register `B` to 0.
-            //     0x80 => self.RES_b_r8(0, Register::B),
-            //     // Set bit 0 of register `C` to 0.
-            //     0x81 => self.RES_b_r8(0, Register::C),
-            //     // Set bit 0 of register `D` to 0.
-            //     0x82 => self.RES_b_r8(0, Register::D),
-            //     // Set bit 0 of register `E` to 0.
-            //     0x83 => self.RES_b_r8(0, Register::E),
-            //     // Set bit 0 of register `H` to 0.
-            //     0x84 => self.RES_b_r8(0, Register::H),
-            //     // Set bit 0 of register `L` to 0.
-            //     0x85 => self.RES_b_r8(0, Register::L),
-            //     // Set bit 0 of the value at address `HL` to 0.
-            //     0x86 => self.RES_b_r16(0, RegisterPair::HL),
-            //     // Set bit 0 of register `A` to 0.
-            //     0x87 => self.RES_b_r8(0, Register::A),
-            //     // Set bit 1 of register `B` to 0.
-            //     0x88 => self.RES_b_r8(1, Register::B),
-            //     // Set bit 1 of register `C` to 0.
-            //     0x89 => self.RES_b_r8(1, Register::C),
-            //     // Set bit 1 of register `D` to 0.
-            //     0x8A => self.RES_b_r8(1, Register::D),
-            //     // Set bit 1 of register `E` to 0.
-            //     0x8B => self.RES_b_r8(1, Register::E),
-            //     // Set bit 1 of register `H` to 0.
-            //     0x8C => self.RES_b_r8(1, Register::H),
-            //     // Set bit 1 of register `L` to 0.
-            //     0x8D => self.RES_b_r8(1, Register::L),
-            //     // Set bit 1 of the value at address `HL` to 0.
-            //     0x8E => self.RES_b_r16(1, RegisterPair::HL),
-            //     // Set bit 1 of register `A` to 0.
-            //     0x8F => self.RES_b_r8(1, Register::A),
-            //     // * 0x9_
-            //     // Set bit 2 of register `B` to 0.
-            //     0x90 => self.RES_b_r8(2, Register::B),
-            //     // Set bit 2 of register `C` to 0.
-            //     0x91 => self.RES_b_r8(2, Register::C),
-            //     // Set bit 2 of register `D` to 0.
-            //     0x92 => self.RES_b_r8(2, Register::D),
-            //     // Set bit 2 of register `E` to 0.
-            //     0x93 => self.RES_b_r8(2, Register::E),
-            //     // Set bit 2 of register `H` to 0.
-            //     0x94 => self.RES_b_r8(2, Register::H),
-            //     // Set bit 2 of register `L` to 0.
-            //     0x95 => self.RES_b_r8(2, Register::L),
-            //     // Set bit 2 of the value at address `HL` to 0.
-            //     0x96 => self.RES_b_r16(2, RegisterPair::HL),
-            //     // Set bit 2 of register `A` to 0.
-            //     0x97 => self.RES_b_r8(2, Register::A),
-            //     // Set bit 3 of register `B` to 0.
-            //     0x98 => self.RES_b_r8(3, Register::B),
-            //     // Set bit 3 of register `C` to 0.
-            //     0x99 => self.RES_b_r8(3, Register::C),
-            //     // Set bit 3 of register `D` to 0.
-            //     0x9A => self.RES_b_r8(3, Register::D),
-            //     // Set bit 3 of register `E` to 0.
-            //     0x9B => self.RES_b_r8(3, Register::E),
-            //     // Set bit 3 of register `H` to 0.
-            //     0x9C => self.RES_b_r8(3, Register::H),
-            //     // Set bit 3 of register `L` to 0.
-            //     0x9D => self.RES_b_r8(3, Register::L),
-            //     // Set bit 3 of the value at address `HL` to 0.
-            //     0x9E => self.RES_b_r16(3, RegisterPair::HL),
-            //     // Set bit 3 of register `A` to 0.
-            //     0x9F => self.RES_b_r8(3, Register::A),
-            //     // * 0xA_
-            //     // Set bit 4 of register `B` to 0.
-            //     0xA0 => self.RES_b_r8(4, Register::B),
-            //     // Set bit 4 of register `C` to 0.
-            //     0xA1 => self.RES_b_r8(4, Register::C),
-            //     // Set bit 4 of register `D` to 0.
-            //     0xA2 => self.RES_b_r8(4, Register::D),
-            //     // Set bit 4 of register `E` to 0.
-            //     0xA3 => self.RES_b_r8(4, Register::E),
-            //     // Set bit 4 of register `H` to 0.
-            //     0xA4 => self.RES_b_r8(4, Register::H),
-            //     // Set bit 4 of register `L` to 0.
-            //     0xA5 => self.RES_b_r8(4, Register::L),
-            //     // Set bit 4 of the value at address `HL` to 0.
-            //     0xA6 => self.RES_b_r16(4, RegisterPair::HL),
-            //     // Set bit 4 of register `A` to 0.
-            //     0xA7 => self.RES_b_r8(4, Register::A),
-            //     // Set bit 5 of register `B` to 0.
-            //     0xA8 => self.RES_b_r8(5, Register::B),
-            //     // Set bit 5 of register `C` to 0.
-            //     0xA9 => self.RES_b_r8(5, Register::C),
-            //     // Set bit 5 of register `D` to 0.
-            //     0xAA => self.RES_b_r8(5, Register::D),
-            //     // Set bit 5 of register `E` to 0.
-            //     0xAB => self.RES_b_r8(5, Register::E),
-            //     // Set bit 5 of register `H` to 0.
-            //     0xAC => self.RES_b_r8(5, Register::H),
-            //     // Set bit 5 of register `L` to 0.
-            //     0xAD => self.RES_b_r8(5, Register::L),
-            //     // Set bit 5 of the value at address `HL` to 0.
-            //     0xAE => self.RES_b_r16(5, RegisterPair::HL),
-            //     // Set bit 5 of register `A` to 0.
-            //     0xAF => self.RES_b_r8(5, Register::A),
-            //     // * 0xB_
-            //     // Set bit 6 of register `B` to 0.
-            //     0xB0 => self.RES_b_r8(6, Register::B),
-            //     // Set bit 6 of register `C` to 0.
-            //     0xB1 => self.RES_b_r8(6, Register::C),
-            //     // Set bit 6 of register `D` to 0.
-            //     0xB2 => self.RES_b_r8(6, Register::D),
-            //     // Set bit 6 of register `E` to 0.
-            //     0xB3 => self.RES_b_r8(6, Register::E),
-            //     // Set bit 6 of register `H` to 0.
-            //     0xB4 => self.RES_b_r8(6, Register::H),
-            //     // Set bit 6 of register `L` to 0.
-            //     0xB5 => self.RES_b_r8(6, Register::L),
-            //     // Set bit 6 of the value at address `HL` to 0.
-            //     0xB6 => self.RES_b_r16(6, RegisterPair::HL),
-            //     // Set bit 6 of register `A` to 0.
-            //     0xB7 => self.RES_b_r8(6, Register::A),
-            //     // Set bit 7 of register `B` to 0.
-            //     0xB8 => self.RES_b_r8(7, Register::B),
-            //     // Set bit 7 of register `C` to 0.
-            //     0xB9 => self.RES_b_r8(7, Register::C),
-            //     // Set bit 7 of register `D` to 0.
-            //     0xBA => self.RES_b_r8(7, Register::D),
-            //     // Set bit 7 of register `E` to 0.
-            //     0xBB => self.RES_b_r8(7, Register::E),
-            //     // Set bit 7 of register `H` to 0.
-            //     0xBC => self.RES_b_r8(7, Register::H),
-            //     // Set bit 7 of register `L` to 0.
-            //     0xBD => self.RES_b_r8(7, Register::L),
-            //     // Set bit 7 of the value at address `HL` to 0.
-            //     0xBE => self.RES_b_r16(7, RegisterPair::HL),
-            //     // Set bit 7 of register `A` to 0.
-            //     0xBF => self.RES_b_r8(7, Register::A),
-            //     // * 0xC_
-            //     // Set bit 0 of register `B` to 1.
-            //     0xC0 => self.SET_b_r8(0, Register::B),
-            //     // Set bit 0 of register `C` to 1.
-            //     0xC1 => self.SET_b_r8(0, Register::C),
-            //     // Set bit 0 of register `D` to 1.
-            //     0xC2 => self.SET_b_r8(0, Register::D),
-            //     // Set bit 0 of register `E` to 1.
-            //     0xC3 => self.SET_b_r8(0, Register::E),
-            //     // Set bit 0 of register `H` to 1.
-            //     0xC4 => self.SET_b_r8(0, Register::H),
-            //     // Set bit 0 of register `L` to 1.
-            //     0xC5 => self.SET_b_r8(0, Register::L),
-            //     // Set bit 0 of the value at address `HL` to 1.
-            //     0xC6 => self.SET_b_r16(0, RegisterPair::HL),
-            //     // Set bit 0 of register `A` to 1.
-            //     0xC7 => self.SET_b_r8(0, Register::A),
-            //     // Set bit 1 of register `B` to 1.
-            //     0xC8 => self.SET_b_r8(1, Register::B),
-            //     // Set bit 1 of register `C` to 1.
-            //     0xC9 => self.SET_b_r8(1, Register::C),
-            //     // Set bit 1 of register `D` to 1.
-            //     0xCA => self.SET_b_r8(1, Register::D),
-            //     // Set bit 1 of register `E` to 1.
-            //     0xCB => self.SET_b_r8(1, Register::E),
-            //     // Set bit 1 of register `H` to 1.
-            //     0xCC => self.SET_b_r8(1, Register::H),
-            //     // Set bit 1 of register `L` to 1.
-            //     0xCD => self.SET_b_r8(1, Register::L),
-            //     // Set bit 1 of the value at address `HL` to 1.
-            //     0xCE => self.SET_b_r16(1, RegisterPair::HL),
-            //     // Set bit 1 of register `A` to 1.
-            //     0xCF => self.SET_b_r8(1, Register::A),
-            //     // * 0xD_
-            //     // Set bit 2 of register `B` to 1.
-            //     0xD0 => self.SET_b_r8(2, Register::B),
-            //     // Set bit 2 of register `C` to 1.
-            //     0xD1 => self.SET_b_r8(2, Register::C),
-            //     // Set bit 2 of register `D` to 1.
-            //     0xD2 => self.SET_b_r8(2, Register::D),
-            //     // Set bit 2 of register `E` to 1.
-            //     0xD3 => self.SET_b_r8(2, Register::E),
-            //     // Set bit 2 of register `H` to 1.
-            //     0xD4 => self.SET_b_r8(2, Register::H),
-            //     // Set bit 2 of register `L` to 1.
-            //     0xD5 => self.SET_b_r8(2, Register::L),
-            //     // Set bit 2 of the value at address `HL` to 1.
-            //     0xD6 => self.SET_b_r16(2, RegisterPair::HL),
-            //     // Set bit 2 of register `A` to 1.
-            //     0xD7 => self.SET_b_r8(2, Register::A),
-            //     // Set bit 3 of register `B` to 1.
-            //     0xD8 => self.SET_b_r8(3, Register::B),
-            //     // Set bit 3 of register `C` to 1.
-            //     0xD9 => self.SET_b_r8(3, Register::C),
-            //     // Set bit 3 of register `D` to 1.
-            //     0xDA => self.SET_b_r8(3, Register::D),
-            //     // Set bit 3 of register `E` to 1.
-            //     0xDB => self.SET_b_r8(3, Register::E),
-            //     // Set bit 3 of register `H` to 1.
-            //     0xDC => self.SET_b_r8(3, Register::H),
-            //     // Set bit 3 of register `L` to 1.
-            //     0xDD => self.SET_b_r8(3, Register::L),
-            //     // Set bit 3 of the value at address `HL` to 1.
-            //     0xDE => self.SET_b_r16(3, RegisterPair::HL),
-            //     // Set bit 3 of register `A` to 1.
-            //     0xDF => self.SET_b_r8(3, Register::A),
-            //     // * 0xE_
-            //     // Set bit 4 of register `B` to 1.
-            //     0xE0 => self.SET_b_r8(4, Register::B),
-            //     // Set bit 4 of register `C` to 1.
-            //     0xE1 => self.SET_b_r8(4, Register::C),
-            //     // Set bit 4 of register `D` to 1.
-            //     0xE2 => self.SET_b_r8(4, Register::D),
-            //     // Set bit 4 of register `E` to 1.
-            //     0xE3 => self.SET_b_r8(4, Register::E),
-            //     // Set bit 4 of register `H` to 1.
-            //     0xE4 => self.SET_b_r8(4, Register::H),
-            //     // Set bit 4 of register `L` to 1.
-            //     0xE5 => self.SET_b_r8(4, Register::L),
-            //     // Set bit 4 of the value at address `HL` to 1.
-            //     0xE6 => self.SET_b_r16(4, RegisterPair::HL),
-            //     // Set bit 4 of register `A` to 1.
-            //     0xE7 => self.SET_b_r8(4, Register::A),
-            //     // Set bit 5 of register `B` to 1.
-            //     0xE8 => self.SET_b_r8(5, Register::B),
-            //     // Set bit 5 of register `C` to 1.
-            //     0xE9 => self.SET_b_r8(5, Register::C),
-            //     // Set bit 5 of register `D` to 1.
-            //     0xEA => self.SET_b_r8(5, Register::D),
-            //     // Set bit 5 of register `E` to 1.
-            //     0xEB => self.SET_b_r8(5, Register::E),
-            //     // Set bit 5 of register `H` to 1.
-            //     0xEC => self.SET_b_r8(5, Register::H),
-            //     // Set bit 5 of register `L` to 1.
-            //     0xED => self.SET_b_r8(5, Register::L),
-            //     // Set bit 5 of the value at address `HL` to 1.
-            //     0xEE => self.SET_b_r16(5, RegisterPair::HL),
-            //     // Set bit 5 of register `A` to 1.
-            //     0xEF => self.SET_b_r8(5, Register::A),
-            //     // * 0xF_
-            //     // Set bit 6 of register `B` to 1.
-            //     0xF0 => self.SET_b_r8(6, Register::B),
-            //     // Set bit 6 of register `C` to 1.
-            //     0xF1 => self.SET_b_r8(6, Register::C),
-            //     // Set bit 6 of register `D` to 1.
-            //     0xF2 => self.SET_b_r8(6, Register::D),
-            //     // Set bit 6 of register `E` to 1.
-            //     0xF3 => self.SET_b_r8(6, Register::E),
-            //     // Set bit 6 of register `H` to 1.
-            //     0xF4 => self.SET_b_r8(6, Register::H),
-            //     // Set bit 6 of register `L` to 1.
-            //     0xF5 => self.SET_b_r8(6, Register::L),
-            //     // Set bit 6 of the value at address `HL` to 1.
-            //     0xF6 => self.SET_b_r16(6, RegisterPair::HL),
-            //     // Set bit 6 of register `A` to 1.
-            //     0xF7 => self.SET_b_r8(6, Register::A),
-            //     // Set bit 7 of register `B` to 1.
-            //     0xF8 => self.SET_b_r8(7, Register::B),
-            //     // Set bit 7 of register `C` to 1.
-            //     0xF9 => self.SET_b_r8(7, Register::C),
-            //     // Set bit 7 of register `D` to 1.
-            //     0xFA => self.SET_b_r8(7, Register::D),
-            //     // Set bit 7 of register `E` to 1.
-            //     0xFB => self.SET_b_r8(7, Register::E),
-            //     // Set bit 7 of register `H` to 1.
-            //     0xFC => self.SET_b_r8(7, Register::H),
-            //     // Set bit 7 of register `L` to 1.
-            //     0xFD => self.SET_b_r8(7, Register::L),
-            //     // Set bit 7 of the value at address `HL` to 1.
-            //     0xFE => self.SET_b_r16(7, RegisterPair::HL),
-            //     // Set bit 7 of register `A` to 1.
-            //     0xFF => self.SET_b_r8(7, Register::A),
-            // }
-            InstructionStep::Complete
-        })
+    Instruction::new("PREFIX".to_string(), move |_emu| {
+        // ? One bus read or write per m-cycle.
+        return InstructionStep::new(move |emu| {
+            let op = emu.read_pc();
+            return match op {
+                // * 0x0_
+                0x00 => RLC_r8(emu, Register::B),
+                0x01 => RLC_r8(emu, Register::C),
+                0x02 => RLC_r8(emu, Register::D),
+                0x03 => RLC_r8(emu, Register::E),
+                0x04 => RLC_r8(emu, Register::H),
+                0x05 => RLC_r8(emu, Register::L),
+                0x06 => RLC_r16(emu, RegisterPair::HL),
+                0x07 => RLC_r8(emu, Register::A),
+                0x08 => RRC_r8(emu, Register::B),
+                0x09 => RRC_r8(emu, Register::C),
+                0x0A => RRC_r8(emu, Register::D),
+                0x0B => RRC_r8(emu, Register::E),
+                0x0C => RRC_r8(emu, Register::H),
+                0x0D => RRC_r8(emu, Register::L),
+                0x0E => RRC_r16(emu, RegisterPair::HL),
+                0x0F => RRC_r8(emu, Register::A),
+                // * 0x1_
+                0x10 => RL_r8(emu, Register::B),
+                0x11 => RL_r8(emu, Register::C),
+                0x12 => RL_r8(emu, Register::D),
+                0x13 => RL_r8(emu, Register::E),
+                0x14 => RL_r8(emu, Register::H),
+                0x15 => RL_r8(emu, Register::L),
+                0x16 => RL_r16(emu, RegisterPair::HL),
+                0x17 => RL_r8(emu, Register::A),
+                0x18 => RR_r8(emu, Register::B),
+                0x19 => RR_r8(emu, Register::C),
+                0x1A => RR_r8(emu, Register::D),
+                0x1B => RR_r8(emu, Register::E),
+                0x1C => RR_r8(emu, Register::H),
+                0x1D => RR_r8(emu, Register::L),
+                0x1E => RR_r16(emu, RegisterPair::HL),
+                0x1F => RR_r8(emu, Register::A),
+                // * 0x2_
+                0x20 => SLA_r8(emu, Register::B),
+                0x21 => SLA_r8(emu, Register::C),
+                0x22 => SLA_r8(emu, Register::D),
+                0x23 => SLA_r8(emu, Register::E),
+                0x24 => SLA_r8(emu, Register::H),
+                0x25 => SLA_r8(emu, Register::L),
+                0x26 => SLA_r16(emu, RegisterPair::HL),
+                0x27 => SLA_r8(emu, Register::A),
+                0x28 => SRA_r8(emu, Register::B),
+                0x29 => SRA_r8(emu, Register::C),
+                0x2A => SRA_r8(emu, Register::D),
+                0x2B => SRA_r8(emu, Register::E),
+                0x2C => SRA_r8(emu, Register::H),
+                0x2D => SRA_r8(emu, Register::L),
+                0x2E => SRA_r16(emu, RegisterPair::HL),
+                0x2F => SRA_r8(emu, Register::A),
+                // * 0x3_
+                0x30 => SWAP_r8(emu, Register::B),
+                0x31 => SWAP_r8(emu, Register::C),
+                0x32 => SWAP_r8(emu, Register::D),
+                0x33 => SWAP_r8(emu, Register::E),
+                0x34 => SWAP_r8(emu, Register::H),
+                0x35 => SWAP_r8(emu, Register::L),
+                0x36 => SWAP_r16(emu, RegisterPair::HL),
+                0x37 => SWAP_r8(emu, Register::A),
+                0x38 => SRL_r8(emu, Register::B),
+                0x39 => SRL_r8(emu, Register::C),
+                0x3A => SRL_r8(emu, Register::D),
+                0x3B => SRL_r8(emu, Register::E),
+                0x3C => SRL_r8(emu, Register::H),
+                0x3D => SRL_r8(emu, Register::L),
+                0x3E => SRL_r16(emu, RegisterPair::HL),
+                0x3F => SRL_r8(emu, Register::A),
+                // * 0x4_
+                0x40 => BIT_b_r8(emu, 0, Register::B),
+                0x41 => BIT_b_r8(emu, 0, Register::C),
+                0x42 => BIT_b_r8(emu, 0, Register::D),
+                0x43 => BIT_b_r8(emu, 0, Register::E),
+                0x44 => BIT_b_r8(emu, 0, Register::H),
+                0x45 => BIT_b_r8(emu, 0, Register::L),
+                0x46 => BIT_b_r16(emu, 0, RegisterPair::HL),
+                0x47 => BIT_b_r8(emu, 0, Register::A),
+                0x48 => BIT_b_r8(emu, 1, Register::B),
+                0x49 => BIT_b_r8(emu, 1, Register::C),
+                0x4A => BIT_b_r8(emu, 1, Register::D),
+                0x4B => BIT_b_r8(emu, 1, Register::E),
+                0x4C => BIT_b_r8(emu, 1, Register::H),
+                0x4D => BIT_b_r8(emu, 1, Register::L),
+                0x4E => BIT_b_r16(emu, 1, RegisterPair::HL),
+                0x4F => BIT_b_r8(emu, 1, Register::A),
+                // * 0x5_
+                0x50 => BIT_b_r8(emu, 2, Register::B),
+                0x51 => BIT_b_r8(emu, 2, Register::C),
+                0x52 => BIT_b_r8(emu, 2, Register::D),
+                0x53 => BIT_b_r8(emu, 2, Register::E),
+                0x54 => BIT_b_r8(emu, 2, Register::H),
+                0x55 => BIT_b_r8(emu, 2, Register::L),
+                0x56 => BIT_b_r16(emu, 2, RegisterPair::HL),
+                0x57 => BIT_b_r8(emu, 2, Register::A),
+                0x58 => BIT_b_r8(emu, 3, Register::B),
+                0x59 => BIT_b_r8(emu, 3, Register::C),
+                0x5A => BIT_b_r8(emu, 3, Register::D),
+                0x5B => BIT_b_r8(emu, 3, Register::E),
+                0x5C => BIT_b_r8(emu, 3, Register::H),
+                0x5D => BIT_b_r8(emu, 3, Register::L),
+                0x5E => BIT_b_r16(emu, 3, RegisterPair::HL),
+                0x5F => BIT_b_r8(emu, 3, Register::A),
+                // * 0x6_
+                0x60 => BIT_b_r8(emu, 4, Register::B),
+                0x61 => BIT_b_r8(emu, 4, Register::C),
+                0x62 => BIT_b_r8(emu, 4, Register::D),
+                0x63 => BIT_b_r8(emu, 4, Register::E),
+                0x64 => BIT_b_r8(emu, 4, Register::H),
+                0x65 => BIT_b_r8(emu, 4, Register::L),
+                0x66 => BIT_b_r16(emu, 4, RegisterPair::HL),
+                0x67 => BIT_b_r8(emu, 4, Register::A),
+                0x68 => BIT_b_r8(emu, 5, Register::B),
+                0x69 => BIT_b_r8(emu, 5, Register::C),
+                0x6A => BIT_b_r8(emu, 5, Register::D),
+                0x6B => BIT_b_r8(emu, 5, Register::E),
+                0x6C => BIT_b_r8(emu, 5, Register::H),
+                0x6D => BIT_b_r8(emu, 5, Register::L),
+                0x6E => BIT_b_r16(emu, 5, RegisterPair::HL),
+                0x6F => BIT_b_r8(emu, 5, Register::A),
+                // * 0x7_
+                0x70 => BIT_b_r8(emu, 6, Register::B),
+                0x71 => BIT_b_r8(emu, 6, Register::C),
+                0x72 => BIT_b_r8(emu, 6, Register::D),
+                0x73 => BIT_b_r8(emu, 6, Register::E),
+                0x74 => BIT_b_r8(emu, 6, Register::H),
+                0x75 => BIT_b_r8(emu, 6, Register::L),
+                0x76 => BIT_b_r16(emu, 6, RegisterPair::HL),
+                0x77 => BIT_b_r8(emu, 6, Register::A),
+                0x78 => BIT_b_r8(emu, 7, Register::B),
+                0x79 => BIT_b_r8(emu, 7, Register::C),
+                0x7A => BIT_b_r8(emu, 7, Register::D),
+                0x7B => BIT_b_r8(emu, 7, Register::E),
+                0x7C => BIT_b_r8(emu, 7, Register::H),
+                0x7D => BIT_b_r8(emu, 7, Register::L),
+                0x7E => BIT_b_r16(emu, 7, RegisterPair::HL),
+                0x7F => BIT_b_r8(emu, 7, Register::A),
+                // * 0x8_
+                0x80 => RES_b_r8(emu, 0, Register::B),
+                0x81 => RES_b_r8(emu, 0, Register::C),
+                0x82 => RES_b_r8(emu, 0, Register::D),
+                0x83 => RES_b_r8(emu, 0, Register::E),
+                0x84 => RES_b_r8(emu, 0, Register::H),
+                0x85 => RES_b_r8(emu, 0, Register::L),
+                0x86 => RES_b_r16(emu, 0, RegisterPair::HL),
+                0x87 => RES_b_r8(emu, 0, Register::A),
+                0x88 => RES_b_r8(emu, 1, Register::B),
+                0x89 => RES_b_r8(emu, 1, Register::C),
+                0x8A => RES_b_r8(emu, 1, Register::D),
+                0x8B => RES_b_r8(emu, 1, Register::E),
+                0x8C => RES_b_r8(emu, 1, Register::H),
+                0x8D => RES_b_r8(emu, 1, Register::L),
+                0x8E => RES_b_r16(emu, 1, RegisterPair::HL),
+                0x8F => RES_b_r8(emu, 1, Register::A),
+                // * 0x9_
+                0x90 => RES_b_r8(emu, 2, Register::B),
+                0x91 => RES_b_r8(emu, 2, Register::C),
+                0x92 => RES_b_r8(emu, 2, Register::D),
+                0x93 => RES_b_r8(emu, 2, Register::E),
+                0x94 => RES_b_r8(emu, 2, Register::H),
+                0x95 => RES_b_r8(emu, 2, Register::L),
+                0x96 => RES_b_r16(emu, 2, RegisterPair::HL),
+                0x97 => RES_b_r8(emu, 2, Register::A),
+                0x98 => RES_b_r8(emu, 3, Register::B),
+                0x99 => RES_b_r8(emu, 3, Register::C),
+                0x9A => RES_b_r8(emu, 3, Register::D),
+                0x9B => RES_b_r8(emu, 3, Register::E),
+                0x9C => RES_b_r8(emu, 3, Register::H),
+                0x9D => RES_b_r8(emu, 3, Register::L),
+                0x9E => RES_b_r16(emu, 3, RegisterPair::HL),
+                0x9F => RES_b_r8(emu, 3, Register::A),
+                // * 0xA_
+                0xA0 => RES_b_r8(emu, 4, Register::B),
+                0xA1 => RES_b_r8(emu, 4, Register::C),
+                0xA2 => RES_b_r8(emu, 4, Register::D),
+                0xA3 => RES_b_r8(emu, 4, Register::E),
+                0xA4 => RES_b_r8(emu, 4, Register::H),
+                0xA5 => RES_b_r8(emu, 4, Register::L),
+                0xA6 => RES_b_r16(emu, 4, RegisterPair::HL),
+                0xA7 => RES_b_r8(emu, 4, Register::A),
+                0xA8 => RES_b_r8(emu, 5, Register::B),
+                0xA9 => RES_b_r8(emu, 5, Register::C),
+                0xAA => RES_b_r8(emu, 5, Register::D),
+                0xAB => RES_b_r8(emu, 5, Register::E),
+                0xAC => RES_b_r8(emu, 5, Register::H),
+                0xAD => RES_b_r8(emu, 5, Register::L),
+                0xAE => RES_b_r16(emu, 5, RegisterPair::HL),
+                0xAF => RES_b_r8(emu, 5, Register::A),
+                // * 0xB_
+                0xB0 => RES_b_r8(emu, 6, Register::B),
+                0xB1 => RES_b_r8(emu, 6, Register::C),
+                0xB2 => RES_b_r8(emu, 6, Register::D),
+                0xB3 => RES_b_r8(emu, 6, Register::E),
+                0xB4 => RES_b_r8(emu, 6, Register::H),
+                0xB5 => RES_b_r8(emu, 6, Register::L),
+                0xB6 => RES_b_r16(emu, 6, RegisterPair::HL),
+                0xB7 => RES_b_r8(emu, 6, Register::A),
+                0xB8 => RES_b_r8(emu, 7, Register::B),
+                0xB9 => RES_b_r8(emu, 7, Register::C),
+                0xBA => RES_b_r8(emu, 7, Register::D),
+                0xBB => RES_b_r8(emu, 7, Register::E),
+                0xBC => RES_b_r8(emu, 7, Register::H),
+                0xBD => RES_b_r8(emu, 7, Register::L),
+                0xBE => RES_b_r16(emu, 7, RegisterPair::HL),
+                0xBF => RES_b_r8(emu, 7, Register::A),
+                // * 0xC_
+                0xC0 => SET_b_r8(emu, 0, Register::B),
+                0xC1 => SET_b_r8(emu, 0, Register::C),
+                0xC2 => SET_b_r8(emu, 0, Register::D),
+                0xC3 => SET_b_r8(emu, 0, Register::E),
+                0xC4 => SET_b_r8(emu, 0, Register::H),
+                0xC5 => SET_b_r8(emu, 0, Register::L),
+                0xC6 => SET_b_r16(emu, 0, RegisterPair::HL),
+                0xC7 => SET_b_r8(emu, 0, Register::A),
+                0xC8 => SET_b_r8(emu, 1, Register::B),
+                0xC9 => SET_b_r8(emu, 1, Register::C),
+                0xCA => SET_b_r8(emu, 1, Register::D),
+                0xCB => SET_b_r8(emu, 1, Register::E),
+                0xCC => SET_b_r8(emu, 1, Register::H),
+                0xCD => SET_b_r8(emu, 1, Register::L),
+                0xCE => SET_b_r16(emu, 1, RegisterPair::HL),
+                0xCF => SET_b_r8(emu, 1, Register::A),
+                // * 0xD_
+                0xD0 => SET_b_r8(emu, 2, Register::B),
+                0xD1 => SET_b_r8(emu, 2, Register::C),
+                0xD2 => SET_b_r8(emu, 2, Register::D),
+                0xD3 => SET_b_r8(emu, 2, Register::E),
+                0xD4 => SET_b_r8(emu, 2, Register::H),
+                0xD5 => SET_b_r8(emu, 2, Register::L),
+                0xD6 => SET_b_r16(emu, 2, RegisterPair::HL),
+                0xD7 => SET_b_r8(emu, 2, Register::A),
+                0xD8 => SET_b_r8(emu, 3, Register::B),
+                0xD9 => SET_b_r8(emu, 3, Register::C),
+                0xDA => SET_b_r8(emu, 3, Register::D),
+                0xDB => SET_b_r8(emu, 3, Register::E),
+                0xDC => SET_b_r8(emu, 3, Register::H),
+                0xDD => SET_b_r8(emu, 3, Register::L),
+                0xDE => SET_b_r16(emu, 3, RegisterPair::HL),
+                0xDF => SET_b_r8(emu, 3, Register::A),
+                // * 0xE_
+                0xE0 => SET_b_r8(emu, 4, Register::B),
+                0xE1 => SET_b_r8(emu, 4, Register::C),
+                0xE2 => SET_b_r8(emu, 4, Register::D),
+                0xE3 => SET_b_r8(emu, 4, Register::E),
+                0xE4 => SET_b_r8(emu, 4, Register::H),
+                0xE5 => SET_b_r8(emu, 4, Register::L),
+                0xE6 => SET_b_r16(emu, 4, RegisterPair::HL),
+                0xE7 => SET_b_r8(emu, 4, Register::A),
+                0xE8 => SET_b_r8(emu, 5, Register::B),
+                0xE9 => SET_b_r8(emu, 5, Register::C),
+                0xEA => SET_b_r8(emu, 5, Register::D),
+                0xEB => SET_b_r8(emu, 5, Register::E),
+                0xEC => SET_b_r8(emu, 5, Register::H),
+                0xED => SET_b_r8(emu, 5, Register::L),
+                0xEE => SET_b_r16(emu, 5, RegisterPair::HL),
+                0xEF => SET_b_r8(emu, 5, Register::A),
+                // * 0xF_
+                0xF0 => SET_b_r8(emu, 6, Register::B),
+                0xF1 => SET_b_r8(emu, 6, Register::C),
+                0xF2 => SET_b_r8(emu, 6, Register::D),
+                0xF3 => SET_b_r8(emu, 6, Register::E),
+                0xF4 => SET_b_r8(emu, 6, Register::H),
+                0xF5 => SET_b_r8(emu, 6, Register::L),
+                0xF6 => SET_b_r16(emu, 6, RegisterPair::HL),
+                0xF7 => SET_b_r8(emu, 6, Register::A),
+                0xF8 => SET_b_r8(emu, 7, Register::B),
+                0xF9 => SET_b_r8(emu, 7, Register::C),
+                0xFA => SET_b_r8(emu, 7, Register::D),
+                0xFB => SET_b_r8(emu, 7, Register::E),
+                0xFC => SET_b_r8(emu, 7, Register::H),
+                0xFD => SET_b_r8(emu, 7, Register::L),
+                0xFE => SET_b_r16(emu, 7, RegisterPair::HL),
+                0xFF => SET_b_r8(emu, 7, Register::A),
+            };
+        });
     })
 }
