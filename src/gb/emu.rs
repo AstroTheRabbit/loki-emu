@@ -1,30 +1,38 @@
-
 use std::rc::Rc;
+
 use winit::window::Window;
 use winit_input_helper::WinitInputHelper;
 
 use crate::RenderBuffer;
 
-use super::{bus::Bus, cpu::CPU, utils::*, instructions::Instruction};
+use super::{bus::Bus, cpu::CPU, utils::*, instructions::Instruction, io_interrupts::IORegisters};
 
 #[derive(Debug)]
-pub struct GameBoyEmulator {
+pub struct GameboyEmulator {
     pub cpu: CPU,
     pub ime: IME,
-    pub is_halted: bool,
-    pub current_instruction: Instruction,
     pub bus: Bus,
+    pub is_halted: bool,
+    pub io_registers: IORegisters,
+    pub current_instruction: Instruction,
 }
 
-impl GameBoyEmulator {
+impl GameboyEmulator {
     pub fn update(
         &mut self,
         _window: Rc<Window>,
-        _input: &mut WinitInputHelper,
+        input: &mut WinitInputHelper,
         buffer: &mut RenderBuffer,
     ) {
         if self.is_halted {
             return;
+        }
+
+        IORegisters::update(self, input);
+
+        // ? Update IME state if `EI` was called.
+        if self.ime == IME::Scheduled {
+            self.ime = IME::Enabled;
         }
 
         // ? Get the next instruction if the previous instruction has completed.
@@ -38,7 +46,7 @@ impl GameBoyEmulator {
         instruction.step(self);
         self.current_instruction = instruction;
 
-        // TODO: Rendering, input, audio, interupts
+        // TODO: Graphics, timer, interupts, input, audio
 
         self.render(buffer);
     }
@@ -48,7 +56,7 @@ impl GameBoyEmulator {
     pub fn read_pc(&mut self) -> u8 {
         let address = self.cpu.get_register_pair(RegisterPair::PC);
         self.cpu.inc_register_pair(RegisterPair::PC);
-        self.bus.read(address)
+        Bus::read(self, address)
     }
 
     /// Read and return a byte from the address of the `SP`, then increment `SP`.
@@ -56,7 +64,7 @@ impl GameBoyEmulator {
     pub fn read_sp(&mut self) -> u8 {
         let address = self.cpu.get_register_pair(RegisterPair::SP);
         self.cpu.inc_register_pair(RegisterPair::SP);
-        self.bus.read(address)
+        Bus::read(self, address)
     }
 
     /// Decrement the `SP`, then write a byte to its address.
@@ -64,21 +72,21 @@ impl GameBoyEmulator {
     pub fn write_sp(&mut self, value: u8) {
         self.cpu.dec_register_pair(RegisterPair::SP);
         let address = self.cpu.get_register_pair(RegisterPair::SP);
-        self.bus.write(address, value)
+        Bus::write(self, address, value)
     }
 
     /// Read a byte from the address `r16`.
     #[inline]
     pub fn read_r16(&mut self, r16: RegisterPair) -> u8 {
         let address = self.cpu.get_register_pair(r16);
-        self.bus.read(address)
+        Bus::read(self, address)
     }
 
     /// Write a byte to the address `r16`.
     #[inline]
     pub fn write_r16(&mut self, r16: RegisterPair, value: u8) {
         let address = self.cpu.get_register_pair(r16);
-        self.bus.write(address, value)
+        Bus::write(self, address, value)
     }
 
     pub fn render(&mut self, _buffer: &mut RenderBuffer) {}

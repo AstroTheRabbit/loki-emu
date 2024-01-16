@@ -4,7 +4,7 @@ use std::string::FromUtf8Error;
 byte_field! {
     /// [pandocs](https://gbdev.io/pandocs/The_Cartridge_Header.html).
     #[derive(Debug)]
-    pub CartridgeHeader;
+    pub Cartridge;
     pub restart_vectors:   256,
     pub entry_point:       4,
     pub nintendo_logo:     48,
@@ -19,9 +19,10 @@ byte_field! {
     pub version_number:    1,
     pub header_checksum:   1,
     pub global_checksum:   2,
+    pub fixed_rom:     16048,
 }
 
-impl CartridgeHeader {
+impl Cartridge {
     pub fn read(&self, address: u16) -> u8 {
         self[(address - 0x0100) as usize]
     }
@@ -33,7 +34,7 @@ impl CartridgeHeader {
 
     pub fn load_from_file(file_path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
         let mut file = std::fs::File::open(&file_path)?;
-        let mut buffer = [0; 336];
+        let mut buffer = [0; Self::len()];
         std::io::Read::read_exact(&mut file, &mut buffer)?;
         Ok(Self::from(buffer))
     }

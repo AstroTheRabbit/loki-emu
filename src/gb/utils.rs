@@ -1,6 +1,6 @@
 use std::ops::BitOr;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum IME {
     Disabled,
     Scheduled,
@@ -79,8 +79,8 @@ impl BitOr<Flag> for u8 {
 
 /// Returns true if any of the bits of `mask` in `v` are true.
 #[inline]
-pub fn get_bit<M: Into<u8>>(v: &u8, mask: M) -> bool {
-    *v & mask.into() != 0
+pub fn get_bit<M: Into<u8>>(v: u8, mask: M) -> bool {
+    v & mask.into() != 0
 }
 
 /// Sets all bits of `v` in the `mask` to `state`.

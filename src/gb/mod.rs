@@ -1,11 +1,12 @@
+/// The original Nintendo Gameboy (or Dot Matrix Game).
+pub mod utils;
+pub mod emu;
+pub mod cpu;
 pub mod bus;
 pub mod cartridge;
-pub mod cpu;
-/// The original Nintendo Game Boy
-pub mod emu;
-pub mod graphics;
 pub mod instructions;
 pub mod operations;
 pub mod prefixed_instructions;
 pub mod prefixed_operations;
-pub mod utils;
+pub mod io_interrupts;
+pub mod graphics;

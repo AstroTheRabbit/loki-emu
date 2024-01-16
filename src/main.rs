@@ -2,12 +2,12 @@ pub mod byte_field;
 pub mod gb;
 
 use gb::{
-    bus::{Bus, IORegisters, HRAM, WRAM},
-    cartridge::CartridgeHeader,
+    bus::*,
+    cartridge::Cartridge,
     cpu::CPU,
-    emu::GameBoyEmulator,
+    emu::GameboyEmulator,
     graphics::{OAM, VRAM},
-    utils::IME, instructions::Instruction,
+    utils::IME, instructions::Instruction, io_interrupts::IORegisters,
 };
 use softbuffer::{Buffer, Context, Surface};
 use std::{num::NonZeroU32, rc::Rc};
@@ -39,26 +39,25 @@ fn main() -> Result<(), EventLoopError> {
 
     let mut input = WinitInputHelper::new();
 
-    let mut emu = GameBoyEmulator {
+    let mut emu = GameboyEmulator {
         cpu: CPU::new_init(),
         ime: IME::Disabled,
         is_halted: false,
-        current_instruction: Instruction::default(),
         bus: Bus {
-            cartridge_header: CartridgeHeader::load_from_file("./roms/Tetris.gb").unwrap(),
+            cartridge: Cartridge::load_from_file("./roms/Tetris.gb").unwrap(),
             vram: VRAM::new_empty(),
             wram: WRAM::new_empty(),
             oam: OAM::new_empty(),
-            io_registers: IORegisters::new_empty(),
             hram: HRAM::new_empty(),
-            ie_register: 0x00,
         },
+        io_registers: IORegisters::new(),
+        current_instruction: Instruction::default(),
     };
 
     window.set_title(
         format!(
             "Loki Emulator - {}",
-            emu.bus.cartridge_header.get_title().unwrap()
+            emu.bus.cartridge.get_title().unwrap()
         )
         .as_str(),
     );

@@ -1,10 +1,12 @@
 use std::fmt;
-use super::{emu::GameBoyEmulator, operations::*, prefixed_instructions::PREFIX_n8, utils::*};
+use crate::Bus;
+
+use super::{emu::GameboyEmulator, operations::*, prefixed_instructions::PREFIX_n8, utils::*};
 
 /// A 4 t-cycle long step of an instruction, either returning the next step or signalling the instruction's completion.
 #[derive(Default)]
 pub enum InstructionStep {
-    Running(Box<dyn FnOnce(&mut GameBoyEmulator) -> InstructionStep>),
+    Running(Box<dyn FnOnce(&mut GameboyEmulator) -> InstructionStep>),
     #[default]
     Complete,
 }
@@ -28,7 +30,7 @@ impl InstructionStep {
     #[inline]
     pub fn new<F>(func: F) -> Self
     where
-        F: FnOnce(&mut GameBoyEmulator) -> InstructionStep + 'static,
+        F: FnOnce(&mut GameboyEmulator) -> InstructionStep + 'static,
     {
         Self::Running(Box::new(func))
     }
@@ -50,7 +52,7 @@ impl fmt::Display for Instruction {
 impl Instruction {
     pub fn new<F>(mnemomic: String, steps: F) -> Self
     where
-        F: FnOnce(&mut GameBoyEmulator) -> InstructionStep + 'static,
+        F: FnOnce(&mut GameboyEmulator) -> InstructionStep + 'static,
     {
         Self {
             mnemomic,
@@ -59,7 +61,7 @@ impl Instruction {
     }
 
     /// Runs one step of the instruction.
-    pub fn step(&mut self, emu: &mut GameBoyEmulator) {
+    pub fn step(&mut self, emu: &mut GameboyEmulator) {
         let step = std::mem::take(&mut self.current_step);
         if let InstructionStep::Running(next_step) = step {
             self.current_step = next_step(emu);
@@ -88,7 +90,7 @@ impl From<u8> for Instruction {
             0x07 => Instruction::new("RLCA".to_string(), |emu| {
                 // ? Slightly different to prefixed `RLC A` (zero flag is always unset, not dependent).
                 let v = emu.cpu.get_register(Register::A);
-                let new_carry = get_bit(&v, 0b1000_0000);
+                let new_carry = get_bit(v, 0b1000_0000);
                 let v = (v << 1) | new_carry as u8;
 
                 emu.cpu.set_register(Register::A, v);
@@ -106,7 +108,7 @@ impl From<u8> for Instruction {
             0x0F => Instruction::new("RRCA".to_string(), |emu| {
                 // ? Slightly different to prefixed `RRC A` (zero flag is always unset, not dependent).
                 let v = emu.cpu.get_register(Register::A);
-                let new_carry = get_bit(&v, 0b0000_0001);
+                let new_carry = get_bit(v, 0b0000_0001);
                 let v = (v >> 1) | ((new_carry as u8) << 7);
 
                 emu.cpu.set_register(Register::A, v);
@@ -129,7 +131,7 @@ impl From<u8> for Instruction {
                 // ? Slightly different to prefixed `RL A` (zero flag is always unset, not dependent).
                 let v = emu.cpu.get_register(Register::A);
                 let prev_carry = emu.cpu.get_flag(Flag::C);
-                let new_carry = get_bit(&v, 0b1000_0000);
+                let new_carry = get_bit(v, 0b1000_0000);
                 let v = (v << 1) | prev_carry as u8;
 
                 emu.cpu.set_register(Register::A, v);
@@ -148,7 +150,7 @@ impl From<u8> for Instruction {
                 // ? Slightly different to prefixed `RRC A` (zero flag is always unset, not dependent).
                 let v = emu.cpu.get_register(Register::A);
                 let prev_carry = emu.cpu.get_flag(Flag::C);
-                let new_carry = get_bit(&v, 0b0000_0001);
+                let new_carry = get_bit(v, 0b0000_0001);
                 let v = (v >> 1) | ((prev_carry as u8) << 7);
 
                 emu.cpu.set_register(Register::A, v);
@@ -499,7 +501,7 @@ impl From<u8> for Instruction {
                     let address = 0xFF00 + emu.read_pc() as u16;
                     InstructionStep::new(move |emu| {
                         let value = emu.cpu.get_register(Register::A);
-                        emu.bus.write(address, value);
+                        Bus::write(emu, address, value);
                         InstructionStep::Complete
                     })
                 })
@@ -510,7 +512,7 @@ impl From<u8> for Instruction {
                 InstructionStep::new(move |emu| {
                     let address = 0xFF00 + emu.cpu.get_register(Register::C) as u16;
                     let value = emu.cpu.get_register(Register::A);
-                    emu.bus.write(address, value);
+                    Bus::write(emu, address, value);
                     InstructionStep::Complete
                 })
             }),
@@ -558,7 +560,7 @@ impl From<u8> for Instruction {
                         let address = join_u16(lsb, msb);
                         InstructionStep::new(move |emu| {
                             let value = emu.cpu.get_register(Register::A);
-                            emu.bus.write(address, value);
+                            Bus::write(emu, address, value);
                             InstructionStep::Complete
                         })
                     })
@@ -584,7 +586,7 @@ impl From<u8> for Instruction {
                 InstructionStep::new(move |emu| {
                     let address = 0xFF00 + emu.read_pc() as u16;
                     InstructionStep::new(move |emu| {
-                        let value = emu.bus.read(address);
+                        let value = Bus::read(emu, address);
                         emu.cpu.set_register(Register::A, value);
                         InstructionStep::Complete
                     })
@@ -594,7 +596,7 @@ impl From<u8> for Instruction {
             0xF2 => Instruction::new("LD A, (0xFF00 + C)".to_string(), |emu| {
                 let address = 0xFF00 + emu.cpu.get_register(Register::C) as u16;
                 InstructionStep::new(move |emu| {
-                    let value = emu.bus.read(address);
+                    let value = Bus::read(emu, address);
                     emu.cpu.set_register(Register::A, value);
                     InstructionStep::Complete
                 })
@@ -642,7 +644,7 @@ impl From<u8> for Instruction {
                         let msb = emu.read_pc();
                         InstructionStep::new(move |emu| {
                             let address = join_u16(lsb, msb);
-                            let value = emu.bus.read(address);
+                            let value = Bus::read(emu, address);
                             emu.cpu.set_register(Register::A, value);
                             InstructionStep::Complete
                         })

@@ -92,7 +92,7 @@ impl CPU {
 
     #[inline]
     pub fn get_flag<F: Into<u8>>(&self, flag: F) -> bool {
-        get_bit(&self.f, flag)
+        get_bit(self.f, flag)
     }
 
     #[inline]

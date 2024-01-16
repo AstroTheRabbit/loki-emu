@@ -1,5 +1,7 @@
 #![allow(non_snake_case)]
 
+use crate::Bus;
+
 use super::{instructions::*, utils::*};
 
 // * LD
@@ -87,9 +89,9 @@ pub fn LD_n16_r16(r16: RegisterPair) -> Instruction {
                 InstructionStep::new(move |emu| {
                     let address = join_u16(lsb, msb);
                     let (lsb, msb) = split_u16(emu.cpu.get_register_pair(r16));
-                    emu.bus.write(address, lsb);
+                    Bus::write(emu, address, lsb);
                     InstructionStep::new(move |emu| {
-                        emu.bus.write(address + 1, msb);
+                        Bus::write(emu, address + 1, msb);
                         InstructionStep::Complete
                     })
                 })
