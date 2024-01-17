@@ -1,14 +1,6 @@
 pub mod byte_field;
 pub mod gb;
 
-use gb::{
-    bus::*,
-    cartridge::Cartridge,
-    cpu::CPU,
-    emu::GameboyEmulator,
-    graphics::{OAM, VRAM},
-    utils::IME, instructions::Instruction, io_interrupts::IORegisters,
-};
 use softbuffer::{Buffer, Context, Surface};
 use std::{num::NonZeroU32, rc::Rc};
 use winit::{
@@ -18,6 +10,8 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 use winit_input_helper::WinitInputHelper;
+
+use crate::gb::{io::{io_registers::IORegisters, graphics::{VRAM, OAM}}, instructions::instructions::Instruction, bus::{WRAM, HRAM, Bus}, emu::GameboyEmulator, cpu::CPU, utils::IME, cartridge::Cartridge};
 
 pub type RenderBuffer<'a> = Buffer<'a, Rc<Window>, Rc<Window>>;
 
@@ -44,7 +38,7 @@ fn main() -> Result<(), EventLoopError> {
         ime: IME::Disabled,
         is_halted: false,
         bus: Bus {
-            cartridge: Cartridge::load_from_file("./roms/Tetris.gb").unwrap(),
+            cartridge: Cartridge::load_from_file("./roms/gb/tests/blargg/01-special.gb").unwrap(),
             vram: VRAM::new_empty(),
             wram: WRAM::new_empty(),
             oam: OAM::new_empty(),
@@ -54,13 +48,10 @@ fn main() -> Result<(), EventLoopError> {
         current_instruction: Instruction::default(),
     };
 
-    window.set_title(
-        format!(
-            "Loki Emulator - {}",
-            emu.bus.cartridge.get_title().unwrap()
-        )
-        .as_str(),
-    );
+    // dbg!(String::from_utf8_lossy(&emu.bus.cartridge.title));
+    println!("{:x?}", &emu.bus.cartridge.title);
+    // window
+    //     .set_title(format!("Loki Emulator - {}", emu.bus.cartridge.get_title().unwrap()).as_str());
 
     event_loop.run(|event, elwt| {
         elwt.set_control_flow(ControlFlow::Poll);

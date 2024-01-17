@@ -1,6 +1,8 @@
 #![allow(non_snake_case)]
 
-use super::{instructions::*, utils::*, prefixed_operations::*};
+use crate::gb::utils::*;
+
+use super::{prefixed_operations::*, instructions::*};
 
 /// Run immediate prefixed operation `n8`.
 pub fn PREFIX_n8() -> Instruction {

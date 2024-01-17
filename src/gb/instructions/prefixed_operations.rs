@@ -13,9 +13,9 @@
 // ? SR/SRL | Bit 0 | 0
 // ? CB SRA | Bit 0 | Bit 7
 
-use crate::Bus;
+use crate::{gb::{utils::*, emu::GameboyEmulator}, Bus};
 
-use super::{emu::GameboyEmulator, utils::*, instructions::InstructionStep};
+use super::instructions::InstructionStep;
 
 /// Rotate register `r8` left, setting the carry flag to the previous bit 7.
 pub fn RLC_r8(emu: &mut GameboyEmulator, r8: Register) -> InstructionStep {
@@ -264,7 +264,7 @@ pub fn SWAP_r16(_emu: &mut GameboyEmulator, r16: RegisterPair) -> InstructionSte
 /// Set the zero flag if bit `b` of register `r8` is not set.
 pub fn BIT_b_r8(emu: &mut GameboyEmulator, b: u8, r8: Register) -> InstructionStep {
     let v = emu.cpu.get_register(r8);
-    emu.cpu.set_flag(Flag::Z, get_bit(v, 1 << b));
+    emu.cpu.set_flag(Flag::Z, !get_bit(v, 1 << b));
     emu.cpu.set_flag(Flag::N, false);
     emu.cpu.set_flag(Flag::H, true);
     return InstructionStep::Complete;
@@ -276,7 +276,7 @@ pub fn BIT_b_r16(_emu: &mut GameboyEmulator, b: u8, r16: RegisterPair) -> Instru
     return InstructionStep::new(move |emu| {
         let address = emu.cpu.get_register_pair(r16);
         let v = Bus::read(emu, address);
-        emu.cpu.set_flag(Flag::Z, get_bit(v, 1 << b));
+        emu.cpu.set_flag(Flag::Z, !get_bit(v, 1 << b));
         emu.cpu.set_flag(Flag::N, false);
         emu.cpu.set_flag(Flag::H, true);
         return InstructionStep::Complete;

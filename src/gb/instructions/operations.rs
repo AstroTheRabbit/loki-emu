@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 
-use crate::Bus;
-
-use super::{instructions::*, utils::*};
-
 // * LD
+
+use crate::gb::{utils::*, bus::Bus};
+
+use super::instructions::*;
 
 /// Load register `r8_2` into register `r8_1`.
 pub fn LD_r8_r8(r8_1: Register, r8_2: Register) -> Instruction {
@@ -17,9 +17,10 @@ pub fn LD_r8_r8(r8_1: Register, r8_2: Register) -> Instruction {
 
 /// Load immediate value `n8` into register `r8`.
 pub fn LD_r8_n8(r8: Register) -> Instruction {
-    Instruction::new(format!("LD {:?}, n8", r8), move |emu| {
-        let value = emu.read_pc();
+    Instruction::new(format!("LD {:?}, n8", r8), move |_emu| {
+        // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
+            let value = emu.read_pc();
             emu.cpu.set_register(r8, value);
             InstructionStep::Complete
         })
@@ -28,9 +29,10 @@ pub fn LD_r8_n8(r8: Register) -> Instruction {
 
 /// Load the value at address `r16` into register `r8`.
 pub fn LD_r8_r16(r8: Register, r16: RegisterPair) -> Instruction {
-    Instruction::new(format!("LD {:?}, ({:?})", r8, r16), move |emu| {
-        let value = emu.read_r16(r16);
+    Instruction::new(format!("LD {:?}, ({:?})", r8, r16), move |_emu| {
+        // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
+            let value = emu.read_r16(r16);
             emu.cpu.set_register(r8, value);
             InstructionStep::Complete
         })
@@ -39,9 +41,10 @@ pub fn LD_r8_r16(r8: Register, r16: RegisterPair) -> Instruction {
 
 /// Load register `r8` into the location of address `r16`.
 pub fn LD_r16_r8(r16: RegisterPair, r8: Register) -> Instruction {
-    Instruction::new(format!("LD ({:?}), {:?}", r16, r8), move |emu| {
-        let value = emu.cpu.get_register(r8);
+    Instruction::new(format!("LD ({:?}), {:?}", r16, r8), move |_emu| {
+        // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
+            let value = emu.cpu.get_register(r8);
             emu.write_r16(r16, value);
             InstructionStep::Complete
         })
@@ -64,7 +67,7 @@ pub fn LD_r16_n8(r16: RegisterPair) -> Instruction {
 
 /// Load immediate value `n16` into the register pair `r16`.
 pub fn LD_r16_n16(r16: RegisterPair) -> Instruction {
-    Instruction::new(format!("LD ({:?}), n16", r16), move |_emu| {
+    Instruction::new(format!("LD {:?}, n16", r16), move |_emu| {
         // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
             let lsb = emu.read_pc();
@@ -147,7 +150,7 @@ pub fn JR_n8() -> Instruction {
     Instruction::new("JR n8".to_string(), move |_emu| {
         // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
-            let value = emu.read_pc() as i16;
+            let value = emu.read_pc() as i8 as i16; // Can't go straight to i16.
             InstructionStep::new(move |emu| {
                 let pc = emu.cpu.get_register_pair(RegisterPair::PC);
                 emu.cpu
@@ -163,7 +166,7 @@ pub fn JR_c_n8(c: Flag) -> Instruction {
     Instruction::new(format!("JR {:?}, n8", c), move |_emu| {
         // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
-            let value = emu.read_pc() as i16;
+            let value = emu.read_pc() as i8 as i16; // Can't go straight to i16.
             if emu.cpu.get_flag(c) {
                 InstructionStep::new(move |emu| {
                     let pc = emu.cpu.get_register_pair(RegisterPair::PC);
@@ -183,7 +186,7 @@ pub fn JR_nc_n8(c: Flag) -> Instruction {
     Instruction::new(format!("JR N{:?}, n8", c), move |_emu| {
         // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
-            let value = emu.read_pc() as i16;
+            let value = emu.read_pc() as i8 as i16; // Can't go straight to i16.
             if !emu.cpu.get_flag(c) {
                 InstructionStep::new(move |emu| {
                     let pc = emu.cpu.get_register_pair(RegisterPair::PC);

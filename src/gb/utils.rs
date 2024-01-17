@@ -77,6 +77,52 @@ impl BitOr<Flag> for u8 {
     }
 }
 
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub enum InterruptMask {
+    VBlank,
+    LCD_STAT,
+    Timer,
+    Serial,
+    Joypad,
+}
+
+impl From<InterruptMask> for u8 {
+    fn from(value: InterruptMask) -> Self {
+        match value {
+            InterruptMask::VBlank => 0b0000_0001,
+            InterruptMask::LCD_STAT => 0b0000_0010,
+            InterruptMask::Timer => 0b0000_0100,
+            InterruptMask::Serial => 0b0000_1000,
+            InterruptMask::Joypad => 0b0001_0000,
+        }
+    }
+}
+
+impl BitOr<Self> for InterruptMask {
+    type Output = u8;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        u8::from(self) | u8::from(rhs)
+    }
+}
+
+impl BitOr<u8> for InterruptMask {
+    type Output = u8;
+
+    fn bitor(self, rhs: u8) -> Self::Output {
+        u8::from(self) | rhs
+    }
+}
+
+impl BitOr<InterruptMask> for u8 {
+    type Output = u8;
+
+    fn bitor(self, rhs: InterruptMask) -> Self::Output {
+        self | u8::from(rhs)
+    }
+}
+
 /// Returns true if any of the bits of `mask` in `v` are true.
 #[inline]
 pub fn get_bit<M: Into<u8>>(v: u8, mask: M) -> bool {

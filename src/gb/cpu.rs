@@ -29,16 +29,16 @@ pub struct CPU {
 impl CPU {
     pub fn new_init() -> Self {
         Self {
-            a: 0x01,
-            f: 0xB0,
+            a: 0x00,
+            f: 0x00,
             b: 0x00,
-            c: 0x13,
+            c: 0x00,
             d: 0x00,
-            e: 0xD8,
-            h: 0x01,
-            l: 0x4D,
+            e: 0x00,
+            h: 0x00,
+            l: 0x00,
             pc: 0x0000,
-            sp: 0xFFFE,
+            sp: 0x0000,
         }
     }
 

@@ -1,7 +1,8 @@
 use std::fmt;
-use crate::Bus;
 
-use super::{emu::GameboyEmulator, operations::*, prefixed_instructions::PREFIX_n8, utils::*};
+use crate::gb::{emu::GameboyEmulator, utils::*, bus::Bus};
+
+use super::{operations::*, prefixed_instructions::PREFIX_n8};
 
 /// A 4 t-cycle long step of an instruction, either returning the next step or signalling the instruction's completion.
 #[derive(Default)]
@@ -45,7 +46,7 @@ pub struct Instruction {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.mnemomic)
+        f.pad(&self.mnemomic)
     }
 }
 
@@ -78,9 +79,7 @@ impl From<u8> for Instruction {
     fn from(value: u8) -> Self {
         match value {
             // * 0x0_
-            0x00 => Instruction::new("NOP".to_string(), |_| {
-                InstructionStep::Complete
-            }),
+            0x00 => Instruction::new("NOP".to_string(), |_| InstructionStep::Complete),
             0x01 => LD_r16_n16(RegisterPair::BC),
             0x02 => LD_r16_r8(RegisterPair::BC, Register::A),
             0x03 => INC_r16(RegisterPair::BC),
@@ -450,7 +449,7 @@ impl From<u8> for Instruction {
             0xD0 => RET_nc(Flag::C),
             0xD1 => POP_r16(RegisterPair::DE),
             0xD2 => JP_nc_n16(Flag::C),
-            0xD3 => unimplemented!("GB - Invalid opcode!"),
+            0xD3 => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xD4 => CALL_nc_n16(Flag::C),
             0xD5 => POP_r16(RegisterPair::DE),
             0xD6 => Instruction::new("SUB A, n8".to_string(), move |_emu| {
@@ -480,9 +479,9 @@ impl From<u8> for Instruction {
                 })
             }),
             0xDA => JP_c_n16(Flag::C),
-            0xDB => unimplemented!("GB - Invalid opcode!"),
+            0xDB => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xDC => CALL_c_n16(Flag::C),
-            0xDD => unimplemented!("GB - Invalid opcode!"),
+            0xDD => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xDE => Instruction::new("SBC A, n8".to_string(), move |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
@@ -516,8 +515,8 @@ impl From<u8> for Instruction {
                     InstructionStep::Complete
                 })
             }),
-            0xE3 => unimplemented!("GB - Invalid opcode!"),
-            0xE4 => unimplemented!("GB - Invalid opcode!"),
+            0xE3 => unimplemented!("GB - {:#X} is and invalid opcode!", value),
+            0xE4 => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xE5 => PUSH_r16(RegisterPair::HL),
             0xE6 => Instruction::new("AND A, n8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
@@ -566,9 +565,9 @@ impl From<u8> for Instruction {
                     })
                 })
             }),
-            0xEB => unimplemented!("GB - Invalid opcode!"),
-            0xEC => unimplemented!("GB - Invalid opcode!"),
-            0xED => unimplemented!("GB - Invalid opcode!"),
+            0xEB => unimplemented!("GB - {:#X} is and invalid opcode!", value),
+            0xEC => unimplemented!("GB - {:#X} is and invalid opcode!", value),
+            0xED => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xEE => Instruction::new("XOR A, n8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
@@ -605,7 +604,7 @@ impl From<u8> for Instruction {
                 emu.ime = IME::Disabled;
                 InstructionStep::Complete
             }),
-            0xF4 => unimplemented!("GB - Invalid opcode!"),
+            0xF4 => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xF5 => PUSH_r16(RegisterPair::AF),
             0xF6 => Instruction::new("OR A, u8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
@@ -655,8 +654,8 @@ impl From<u8> for Instruction {
                 emu.ime = IME::Scheduled;
                 InstructionStep::Complete
             }),
-            0xFC => unimplemented!("GB - Invalid opcode!"),
-            0xFD => unimplemented!("GB - Invalid opcode!"),
+            0xFC => unimplemented!("GB - {:#X} is and invalid opcode!", value),
+            0xFD => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xFE => Instruction::new("CP A, n8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {

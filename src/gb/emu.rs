@@ -5,7 +5,7 @@ use winit_input_helper::WinitInputHelper;
 
 use crate::RenderBuffer;
 
-use super::{bus::Bus, cpu::CPU, utils::*, instructions::Instruction, io_interrupts::IORegisters};
+use super::{bus::Bus, cpu::CPU, instructions::instructions::Instruction, utils::*, io::io_registers::IORegisters};
 
 #[derive(Debug)]
 pub struct GameboyEmulator {
@@ -37,8 +37,9 @@ impl GameboyEmulator {
 
         // ? Get the next instruction if the previous instruction has completed.
         if self.current_instruction.has_completed() {
+            let pc = self.cpu.get_register_pair(RegisterPair::PC);
             self.current_instruction = self.read_pc().into();
-            println!("{}", self.current_instruction);
+            println!("{:>19}   at PC = {:#06X}", self.current_instruction, pc);
         }
 
         // ? Run the current instruction.
