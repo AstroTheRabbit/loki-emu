@@ -6,7 +6,7 @@ use winit_input_helper::WinitInputHelper;
 
 use crate::gb::emu::GameboyEmulator;
 
-use super::{timer::TimerRegisters, joypad::JoypadRegisters, graphics::GraphicsRegisters};
+use super::{graphics::GraphicsRegisters, joypad::JoypadRegisters, timer::TimerRegisters};
 
 #[derive(Debug)]
 pub struct IORegisters {
@@ -179,7 +179,11 @@ impl SerialRegisters {
     pub fn write_SB(emu: &mut GameboyEmulator, value: u8) {
         emu.io_registers.serial.SB = value;
         // ! Blargg tests output.
-        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).write(true).open("./blargg_output.txt") {
+        if let Ok(mut f) = std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open("./blargg_output.txt")
+        {
             f.write(&[value]).unwrap();
         }
     }

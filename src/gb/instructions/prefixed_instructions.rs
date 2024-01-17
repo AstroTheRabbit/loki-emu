@@ -2,7 +2,7 @@
 
 use crate::gb::utils::*;
 
-use super::{prefixed_operations::*, instructions::*};
+use super::{instructions::*, prefixed_operations::*};
 
 /// Run immediate prefixed operation `n8`.
 pub fn PREFIX_n8() -> Instruction {

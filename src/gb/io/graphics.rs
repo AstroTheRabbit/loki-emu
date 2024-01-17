@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
 
-use crate::{byte_field, Bus, gb::{emu::GameboyEmulator, utils::join_u16}};
+use crate::{
+    byte_field,
+    gb::{bus::Bus, emu::GameboyEmulator, utils::join_u16},
+};
 
 // ? Original color scheme
 // ? 0b00: #0f380f

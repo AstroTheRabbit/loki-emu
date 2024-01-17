@@ -1,8 +1,10 @@
+// #![cfg(not(test))]
 pub mod byte_field;
 pub mod gb;
 
-use softbuffer::{Buffer, Context, Surface};
 use std::{num::NonZeroU32, rc::Rc};
+
+use softbuffer::{Buffer, Context, Surface};
 use winit::{
     dpi::PhysicalSize,
     error::EventLoopError,
@@ -11,13 +13,23 @@ use winit::{
 };
 use winit_input_helper::WinitInputHelper;
 
-use crate::gb::{io::{io_registers::IORegisters, graphics::{VRAM, OAM}}, instructions::instructions::Instruction, bus::{WRAM, HRAM, Bus}, emu::GameboyEmulator, cpu::CPU, utils::IME, cartridge::Cartridge};
+use crate::gb::{
+    bus::{Bus, HRAM, WRAM},
+    cartridge::Cartridge,
+    cpu::CPU,
+    emu::GameboyEmulator,
+    instructions::instructions::Instruction,
+    io::{
+        graphics::{OAM, VRAM},
+        io_registers::IORegisters,
+    },
+    utils::IME,
+};
 
 pub type RenderBuffer<'a> = Buffer<'a, Rc<Window>, Rc<Window>>;
 
 fn main() -> Result<(), EventLoopError> {
     let event_loop = EventLoop::new().expect("Unable to create window!");
-
     let window = Rc::new(
         WindowBuilder::new()
             .with_title("Loki Emulator")
@@ -48,10 +60,9 @@ fn main() -> Result<(), EventLoopError> {
         current_instruction: Instruction::default(),
     };
 
-    // dbg!(String::from_utf8_lossy(&emu.bus.cartridge.title));
-    println!("{:x?}", &emu.bus.cartridge.title);
-    // window
-    //     .set_title(format!("Loki Emulator - {}", emu.bus.cartridge.get_title().unwrap()).as_str());
+    if let Ok(title) = emu.bus.cartridge.get_title() {
+        window.set_title(format!("Loki Emulator - {title}").as_str());
+    }
 
     event_loop.run(|event, elwt| {
         elwt.set_control_flow(ControlFlow::Poll);

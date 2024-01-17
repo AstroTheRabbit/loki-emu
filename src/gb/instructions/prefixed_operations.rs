@@ -13,7 +13,7 @@
 // ? SR/SRL | Bit 0 | 0
 // ? CB SRA | Bit 0 | Bit 7
 
-use crate::{gb::{utils::*, emu::GameboyEmulator}, Bus};
+use crate::gb::{bus::Bus, emu::GameboyEmulator, utils::*};
 
 use super::instructions::InstructionStep;
 

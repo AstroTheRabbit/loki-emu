@@ -2,7 +2,7 @@
 
 // * LD
 
-use crate::gb::{utils::*, bus::Bus};
+use crate::gb::{bus::Bus, utils::*};
 
 use super::instructions::*;
 

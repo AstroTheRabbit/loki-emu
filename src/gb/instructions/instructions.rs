@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::gb::{emu::GameboyEmulator, utils::*, bus::Bus};
+use crate::gb::{bus::Bus, emu::GameboyEmulator, utils::*};
 
 use super::{operations::*, prefixed_instructions::PREFIX_n8};
 
@@ -531,13 +531,13 @@ impl From<u8> for Instruction {
             0xE8 => Instruction::new("ADD SP, i8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let value = emu.read_pc() as i8;
+                    let value = emu.read_pc() as i8 as i16;
                     InstructionStep::new(move |emu| {
                         // ? Techincally writes upper and lower bytes seperately.
                         let value = emu
                             .cpu
                             .get_register_pair(RegisterPair::SP)
-                            .wrapping_add_signed(value.into());
+                            .wrapping_add_signed(value);
                         InstructionStep::new(move |emu| {
                             emu.cpu.set_register_pair(RegisterPair::SP, value);
                             InstructionStep::Complete
@@ -619,12 +619,12 @@ impl From<u8> for Instruction {
             0xF8 => Instruction::new("LD HL, SP + i8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let value = emu.read_pc() as i8;
+                    let value = emu.read_pc() as i8 as i16;
                     InstructionStep::new(move |emu| {
                         let value = emu
                             .cpu
                             .get_register_pair(RegisterPair::SP)
-                            .wrapping_add_signed(value.into());
+                            .wrapping_add_signed(value);
                         emu.cpu.set_register_pair(RegisterPair::HL, value);
                         InstructionStep::Complete
                     })

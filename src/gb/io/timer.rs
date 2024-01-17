@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use crate::gb::{emu::GameboyEmulator, utils::*, bus::Bus};
+use crate::gb::{bus::Bus, emu::GameboyEmulator, utils::*};
 
 #[derive(Debug, PartialEq)]
 pub enum TIMAOverflowState {
@@ -44,7 +44,7 @@ impl TimerRegisters {
 
     /// Update the timer as if 4 t-cycles have passed.
     pub fn update(emu: &mut GameboyEmulator) {
-        // ? https://hacktix.github.io/GBEDG/timers/#timer-operation
+        // ? https://hacktix.github.io/GBEDG/timers/#[cfg(test)]imer-operation
         for _ in 0..4 {
             emu.io_registers.timer.DIV += 1;
 

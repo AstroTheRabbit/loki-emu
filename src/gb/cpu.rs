@@ -1,4 +1,4 @@
-use super::utils::{get_bit, join_u16, set_bit, toggle_bit, Flag, RegisterPair};
+use super::utils::*;
 use crate::gb::utils::{split_u16, Register};
 
 /// [pandocs](https://gbdev.io/pandocs/CPU_Registers_and_Flags.html)
@@ -27,6 +27,22 @@ pub struct CPU {
 }
 
 impl CPU {
+    #[cfg(test)]
+    pub fn new(a: u8, f: u8, b: u8, c: u8, d: u8, e: u8, h: u8, l: u8, pc: u16, sp: u16) -> Self {
+        Self {
+            a,
+            f,
+            b,
+            c,
+            d,
+            e,
+            h,
+            l,
+            pc,
+            sp,
+        }
+    }
+
     pub fn new_init() -> Self {
         Self {
             a: 0x00,
@@ -70,10 +86,10 @@ impl CPU {
 
     pub fn get_register_pair(&mut self, pair: RegisterPair) -> u16 {
         match pair {
-            RegisterPair::AF => join_u16(self.a, self.f),
-            RegisterPair::BC => join_u16(self.b, self.c),
-            RegisterPair::DE => join_u16(self.d, self.e),
-            RegisterPair::HL => join_u16(self.h, self.l),
+            RegisterPair::AF => join_u16(self.f, self.a),
+            RegisterPair::BC => join_u16(self.c, self.b),
+            RegisterPair::DE => join_u16(self.e, self.d),
+            RegisterPair::HL => join_u16(self.l, self.h),
             RegisterPair::PC => self.pc,
             RegisterPair::SP => self.sp,
         }
@@ -81,10 +97,10 @@ impl CPU {
 
     pub fn set_register_pair(&mut self, pair: RegisterPair, value: u16) {
         match pair {
-            RegisterPair::AF => (self.a, self.f) = split_u16(value),
-            RegisterPair::BC => (self.b, self.c) = split_u16(value),
-            RegisterPair::DE => (self.d, self.e) = split_u16(value),
-            RegisterPair::HL => (self.h, self.l) = split_u16(value),
+            RegisterPair::AF => (self.f, self.a) = split_u16(value),
+            RegisterPair::BC => (self.c, self.b) = split_u16(value),
+            RegisterPair::DE => (self.e, self.d) = split_u16(value),
+            RegisterPair::HL => (self.l, self.h) = split_u16(value),
             RegisterPair::PC => self.pc = value,
             RegisterPair::SP => self.sp = value,
         }
@@ -190,12 +206,13 @@ impl CPU {
 
     /// Adds one to the register, managing flags correctly.
     pub fn inc_register(&mut self, reg: Register) {
-        let v = self.get_register(reg).wrapping_add(1);
-        self.set_register(reg, v);
+        let v = self.get_register(reg);
+        let value = v.wrapping_add(1);
+        self.set_register(reg, value);
 
-        self.set_flag(Flag::Z, v == 0);
+        self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, (v & 0xF) > 0xE); // same as (v & 0xF) + (1 & 0xF) > 0xF
+        self.set_flag(Flag::H, (v & 0x0F) > 0x0E); // same as (v & 0xF) + (1 & 0xF) > 0xF
     }
 
     /// Adds one to the register pair, managing flags correctly.
@@ -206,12 +223,13 @@ impl CPU {
 
     /// Subtracts one from the register, managing flags correctly.
     pub fn dec_register(&mut self, reg: Register) {
-        let v = self.get_register(reg).wrapping_sub(1);
-        self.set_register(reg, v);
+        let v = self.get_register(reg);
+        let value = v.wrapping_sub(1);
+        self.set_register(reg, value);
 
         self.set_flag(Flag::Z, v == 0);
         self.set_flag(Flag::N, true);
-        self.set_flag(Flag::H, (v & 0xF) > 0x10); // same as (v & 0xF) - (1 & 0xF) > 0xF
+        self.set_flag(Flag::H, (v & 0xF0) <= 0x10);
     }
 
     /// Subtracts one to the register pair, managing flags correctly.

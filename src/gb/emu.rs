@@ -1,11 +1,10 @@
 use std::rc::Rc;
-
 use winit::window::Window;
 use winit_input_helper::WinitInputHelper;
 
+use super::{bus::Bus, cpu::CPU, instructions::instructions::Instruction, utils::*};
+use crate::gb::io::io_registers::IORegisters;
 use crate::RenderBuffer;
-
-use super::{bus::Bus, cpu::CPU, instructions::instructions::Instruction, utils::*, io::io_registers::IORegisters};
 
 #[derive(Debug)]
 pub struct GameboyEmulator {
