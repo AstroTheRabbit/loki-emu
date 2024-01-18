@@ -40,12 +40,15 @@ byte_field! {
 }
 
 impl Bus {
-    pub fn read(#[allow(unused_variables)] emu: &mut GameboyEmulator, #[allow(unused_mut)] mut address: u16) -> u8 {
+    pub fn read(
+        #[allow(unused_variables)] emu: &mut GameboyEmulator,
+        #[allow(unused_mut)] mut address: u16,
+    ) -> u8 {
         #[cfg(test)]
         {
             return unsafe { TEST_RAM[address as usize] };
         }
-        
+
         #[cfg(not(test))]
         {
             // ? DMA transfer in progress: R/W is not functional (except for HRAM = 0xFF80..=0xFFFE).
@@ -82,7 +85,9 @@ impl Bus {
     pub fn write(#[allow(unused_variables)] emu: &mut GameboyEmulator, address: u16, value: u8) {
         #[cfg(test)]
         {
-            return unsafe { TEST_RAM[address as usize] = value; }
+            return unsafe {
+                TEST_RAM[address as usize] = value;
+            };
         }
 
         #[cfg(not(test))]

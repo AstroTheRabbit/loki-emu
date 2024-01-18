@@ -138,7 +138,7 @@ impl From<u8> for Instruction {
                 emu.cpu.set_flag(Flag::Z | Flag::N | Flag::H, false);
                 InstructionStep::Complete
             }),
-            0x18 => LD_n16_r16(RegisterPair::SP),
+            0x18 => JR_n8(),
             0x19 => ADD_r16_r16(RegisterPair::HL, RegisterPair::DE),
             0x1A => LD_r8_r16(Register::A, RegisterPair::DE),
             0x1B => DEC_r16(RegisterPair::DE),
@@ -173,7 +173,32 @@ impl From<u8> for Instruction {
             0x24 => INC_r8(Register::H),
             0x25 => DEC_r8(Register::H),
             0x26 => LD_r8_n8(Register::H),
-            0x27 => todo!("GB - DAA instruction"),
+            0x27 => Instruction::new("DAA".to_string(), move |emu| {
+                let mut offset = 0x00;
+
+                let reg_val = emu.cpu.get_register(Register::A);
+                let half_carry = emu.cpu.get_flag(Flag::H);
+                let carry = emu.cpu.get_flag(Flag::C);
+                let subtract = emu.cpu.get_flag(Flag::N);
+
+                if (!subtract && reg_val & 0xF > 0x09) || half_carry {
+                    offset |= 0x06;
+                }
+                if (!subtract && reg_val > 0x99) || carry {
+                    offset |= 0x60;
+                    emu.cpu.set_flag(Flag::C, true);
+                }
+
+                let value = match subtract {
+                    true => reg_val.wrapping_sub(offset),
+                    false => reg_val.wrapping_add(offset),
+                };
+                emu.cpu.set_flag(Flag::Z, value == 0);
+                emu.cpu.set_flag(Flag::H, false);
+                emu.cpu.set_register(Register::A, value);
+
+                InstructionStep::Complete
+            }),
             0x28 => JR_c_n8(Flag::Z),
             0x29 => ADD_r16_r16(RegisterPair::HL, RegisterPair::HL),
             0x2A => Instruction::new("LD A, (HL+)".to_string(), |_emu| {
@@ -213,12 +238,13 @@ impl From<u8> for Instruction {
                 // This instruction is different to `INC HL`.
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let value = emu.read_r16(RegisterPair::HL).wrapping_add(1);
+                    let v = emu.read_r16(RegisterPair::HL);
+                    let value = v.wrapping_add(1);
                     InstructionStep::new(move |emu| {
                         emu.write_r16(RegisterPair::HL, value);
                         emu.cpu.set_flag(Flag::Z, value == 0);
                         emu.cpu.set_flag(Flag::N, false);
-                        emu.cpu.set_flag(Flag::H, (value & 0xF) > 0xE);
+                        emu.cpu.set_flag(Flag::H, get_bit((v & 0xF) + 1, 0x10));
                         InstructionStep::Complete
                     })
                 })
@@ -227,12 +253,13 @@ impl From<u8> for Instruction {
                 // This instruction is different to `DEC HL`.
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let value = emu.read_r16(RegisterPair::HL).wrapping_sub(1);
+                    let v = emu.read_r16(RegisterPair::HL);
+                    let value = v.wrapping_sub(1);
                     InstructionStep::new(move |emu| {
                         emu.write_r16(RegisterPair::HL, value);
                         emu.cpu.set_flag(Flag::Z, value == 0);
                         emu.cpu.set_flag(Flag::N, true);
-                        emu.cpu.set_flag(Flag::H, (value & 0xF) > 0xE);
+                        emu.cpu.set_flag(Flag::H, get_bit((v & 0xF) - 1, 0x10));
                         InstructionStep::Complete
                     })
                 })
@@ -437,8 +464,8 @@ impl From<u8> for Instruction {
             0xCE => Instruction::new("ADC A, n8".to_string(), move |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let mut value = emu.read_pc() + emu.cpu.get_flag(Flag::C) as u8;
-                    value = emu.cpu.add_register(Register::A, value);
+                    let mut value = emu.read_pc();
+                    value = emu.cpu.adc_register(Register::A, value);
                     emu.cpu.set_register(Register::A, value);
                     InstructionStep::Complete
                 })
@@ -451,7 +478,7 @@ impl From<u8> for Instruction {
             0xD2 => JP_nc_n16(Flag::C),
             0xD3 => unimplemented!("GB - {:#X} is and invalid opcode!", value),
             0xD4 => CALL_nc_n16(Flag::C),
-            0xD5 => POP_r16(RegisterPair::DE),
+            0xD5 => PUSH_r16(RegisterPair::DE),
             0xD6 => Instruction::new("SUB A, n8".to_string(), move |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
@@ -485,8 +512,8 @@ impl From<u8> for Instruction {
             0xDE => Instruction::new("SBC A, n8".to_string(), move |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let mut value = emu.read_pc() + emu.cpu.get_flag(Flag::C) as u8;
-                    value = emu.cpu.sub_register(Register::A, value);
+                    let mut value = emu.read_pc();
+                    value = emu.cpu.sbc_register(Register::A, value);
                     emu.cpu.set_register(Register::A, value);
                     InstructionStep::Complete
                 })
@@ -531,13 +558,16 @@ impl From<u8> for Instruction {
             0xE8 => Instruction::new("ADD SP, i8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let value = emu.read_pc() as i8 as i16;
+                    // ? Thanks to https://github.com/Gekkio/mooneye-gb/blob/3856dcbca82a7d32bd438cc92fd9693f868e2e23/core/src/cpu/execute.rs#L709
+                    let v = emu.read_pc() as i8 as u16;
                     InstructionStep::new(move |emu| {
                         // ? Techincally writes upper and lower bytes seperately.
-                        let value = emu
-                            .cpu
-                            .get_register_pair(RegisterPair::SP)
-                            .wrapping_add_signed(value);
+                        let reg_val = emu.cpu.get_register_pair(RegisterPair::SP);
+                        let value = reg_val.wrapping_add(v);
+                        emu.cpu.set_flag(Flag::Z | Flag::N, false);
+                        emu.cpu.set_flag(Flag::H, get_bit((reg_val & 0xF) + (v & 0xF), 0x10u16));
+                        emu.cpu.set_flag(Flag::C, get_bit((reg_val & 0xFF) + (v & 0xFF), 0x100u16));
+
                         InstructionStep::new(move |emu| {
                             emu.cpu.set_register_pair(RegisterPair::SP, value);
                             InstructionStep::Complete
@@ -619,21 +649,27 @@ impl From<u8> for Instruction {
             0xF8 => Instruction::new("LD HL, SP + i8".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.
                 InstructionStep::new(move |emu| {
-                    let value = emu.read_pc() as i8 as i16;
+                    // ? Thanks to https://github.com/Gekkio/mooneye-gb/blob/3856dcbca82a7d32bd438cc92fd9693f868e2e23/core/src/cpu/execute.rs#L709
+                    let v = emu.read_pc() as i8 as u16;
                     InstructionStep::new(move |emu| {
-                        let value = emu
-                            .cpu
-                            .get_register_pair(RegisterPair::SP)
-                            .wrapping_add_signed(value);
+                        // ? Techincally writes upper and lower bytes seperately.
+                        let reg_val = emu.cpu.get_register_pair(RegisterPair::SP);
+                        let value = reg_val.wrapping_add(v);
+                        emu.cpu.set_flag(Flag::Z | Flag::N, false);
+                        emu.cpu.set_flag(Flag::H, get_bit((reg_val & 0xF) + (v & 0xF), 0x10u16));
+                        emu.cpu.set_flag(Flag::C, get_bit((reg_val & 0xFF) + (v & 0xFF), 0x100u16));
                         emu.cpu.set_register_pair(RegisterPair::HL, value);
                         InstructionStep::Complete
                     })
                 })
             }),
             0xF9 => Instruction::new("LD SP, HL".to_string(), |emu| {
+                // ? Listed as 2 m-cycles long.
                 let value = emu.cpu.get_register_pair(RegisterPair::HL);
-                emu.cpu.set_register_pair(RegisterPair::SP, value);
-                InstructionStep::Complete
+                InstructionStep::new(move |emu| {
+                    emu.cpu.set_register_pair(RegisterPair::SP, value);
+                    InstructionStep::Complete
+                })
             }),
             0xFA => Instruction::new("LD A, (n16)".to_string(), |_emu| {
                 // ? One bus read or write per m-cycle.

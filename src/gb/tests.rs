@@ -11,7 +11,7 @@ fn jsmoo_instruction_tests() -> Result<(), Box<dyn std::error::Error>> {
             graphics::{OAM, VRAM},
             io_registers::IORegisters,
         },
-        utils::{Register, RegisterPair, IME},
+        utils::*,
     };
     use serde::Deserialize;
     use std::fs;
@@ -74,6 +74,8 @@ fn jsmoo_instruction_tests() -> Result<(), Box<dyn std::error::Error>> {
 
     #[inline]
     fn test_error(expected: &JsmooTest, result: &mut GameboyEmulator) {
+        let expected_cpu = CPU::from(&expected.r#final);
+
         let mut ram = Vec::with_capacity(expected.r#final.ram.len());
         for (address, expected) in &expected.r#final.ram {
             let result = Bus::read(result, *address);
@@ -81,10 +83,7 @@ fn jsmoo_instruction_tests() -> Result<(), Box<dyn std::error::Error>> {
         }
         panic!(
             "Jsmoo test {} failed!\n\nExpected CPU: {:#X?}\nResult CPU: {:#X?}\nRAM: {:#X?}",
-            expected.name,
-            CPU::from(&expected.r#final),
-            result.cpu,
-            ram,
+            expected.name, expected_cpu, result.cpu, ram,
         );
     }
 
@@ -101,6 +100,10 @@ fn jsmoo_instruction_tests() -> Result<(), Box<dyn std::error::Error>> {
         for test in tests {
             let mut emu = GameboyEmulator::from(&test.initial);
             for _ in 0..test.cycles.len() {
+                if emu.is_halted {
+                    continue;
+                }
+
                 // ? Get the next instruction if the previous instruction has completed.
                 if emu.current_instruction.has_completed() {
                     emu.current_instruction = emu.read_pc().into();

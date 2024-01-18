@@ -58,7 +58,7 @@ impl CPU {
         }
     }
 
-    pub fn get_register(&mut self, reg: Register) -> u8 {
+    pub fn get_register(&self, reg: Register) -> u8 {
         match reg {
             Register::A => self.a,
             Register::F => self.f,
@@ -74,7 +74,7 @@ impl CPU {
     pub fn set_register(&mut self, reg: Register, value: u8) {
         match reg {
             Register::A => self.a = value,
-            Register::F => self.f = value,
+            Register::F => self.f = value & 0xF0,
             Register::B => self.b = value,
             Register::C => self.c = value,
             Register::D => self.d = value,
@@ -84,7 +84,7 @@ impl CPU {
         }
     }
 
-    pub fn get_register_pair(&mut self, pair: RegisterPair) -> u16 {
+    pub fn get_register_pair(&self, pair: RegisterPair) -> u16 {
         match pair {
             RegisterPair::AF => join_u16(self.f, self.a),
             RegisterPair::BC => join_u16(self.c, self.b),
@@ -97,7 +97,10 @@ impl CPU {
 
     pub fn set_register_pair(&mut self, pair: RegisterPair, value: u16) {
         match pair {
-            RegisterPair::AF => (self.f, self.a) = split_u16(value),
+            RegisterPair::AF => (self.f, self.a) = {
+                let (lsb, msb) = split_u16(value);
+                (lsb & 0xF0, msb)
+            },
             RegisterPair::BC => (self.c, self.b) = split_u16(value),
             RegisterPair::DE => (self.e, self.d) = split_u16(value),
             RegisterPair::HL => (self.l, self.h) = split_u16(value),
@@ -121,7 +124,7 @@ impl CPU {
         toggle_bit(&mut self.f, flag);
     }
 
-    // * ADDition
+    // * ADC/ADDition
 
     /// Adds a value and a register together, handling flags and returning the result.
     ///
@@ -132,7 +135,27 @@ impl CPU {
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, (reg_val & 0xF) + (value & 0xF) > 0xF);
+        self.set_flag(Flag::H, get_bit((reg_val & 0xF) + (value & 0xF), 0x10));
+        self.set_flag(Flag::C, overflow);
+        new
+    }
+
+    /// Adds a value, a register and the carry flags together, handling flags and returning the result.
+    ///
+    /// Note: Does not set the register to the new value, [`CPU::set_register`] must be called seperately.
+    pub fn adc_register(&mut self, reg: Register, value: u8) -> u8 {
+        let reg_val = self.get_register(reg);
+        let carry = self.get_flag(Flag::C) as u8;
+        let (new, overflow_1) = reg_val.overflowing_add(value);
+        let (new, overflow_2) = new.overflowing_add(carry);
+        let overflow = overflow_1 | overflow_2;
+
+        self.set_flag(Flag::Z, new == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(
+            Flag::H,
+            get_bit((reg_val & 0xF) + (value & 0xF) + (carry & 0xF), 0x10),
+        );
         self.set_flag(Flag::C, overflow);
         new
     }
@@ -144,12 +167,16 @@ impl CPU {
         let reg_val = self.get_register_pair(pair);
         let (new, overflow) = reg_val.overflowing_add(value);
 
-        self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, (reg_val & 0xFFF) + (value & 0xFFF) > 0xFFF);
+        self.set_flag(
+            Flag::H,
+            get_bit((reg_val & 0xFFF) + (value & 0xFFF), 0x1000u16),
+        );
         self.set_flag(Flag::C, overflow);
         new
     }
+
+    // * SBC/SUBtraction
 
     /// Subtracts a value from a register, handling flags and returning the result.
     ///
@@ -160,10 +187,32 @@ impl CPU {
 
         self.set_flag(Flag::Z, new == 0);
         self.set_flag(Flag::N, true);
-        self.set_flag(Flag::H, (reg_val & 0xF) + (value & 0xF) > 0xF);
+        self.set_flag(Flag::H, get_bit((reg_val & 0xF) - (value & 0xF), 0x10));
         self.set_flag(Flag::C, overflow);
         new
     }
+
+    /// Subtracts a value and the carry flag from a register, handling flags and returning the result.
+    ///
+    /// Note: Does not set either register pair to the new value, [`CPU::set_register_pair`] must be called seperately.
+    pub fn sbc_register(&mut self, reg: Register, value: u8) -> u8 {
+        let reg_val = self.get_register(reg);
+        let carry = self.get_flag(Flag::C) as u8;
+        let (new, overflow_1) = reg_val.overflowing_sub(value);
+        let (new, overflow_2) = new.overflowing_sub(carry);
+        let overflow = overflow_1 | overflow_2;
+
+        self.set_flag(Flag::Z, new == 0);
+        self.set_flag(Flag::N, true);
+        self.set_flag(
+            Flag::H,
+            get_bit((reg_val & 0xF) - (value & 0xF) - (carry & 0xF), 0x10),
+        );
+        self.set_flag(Flag::C, overflow);
+        new
+    }
+
+    // * Bitwise ops
 
     /// Bitwise AND a value and a register together, handling flags and returning the result.
     ///
@@ -206,35 +255,35 @@ impl CPU {
 
     /// Adds one to the register, managing flags correctly.
     pub fn inc_register(&mut self, reg: Register) {
-        let v = self.get_register(reg);
-        let value = v.wrapping_add(1);
+        let reg_val = self.get_register(reg);
+        let value = reg_val.wrapping_add(1);
         self.set_register(reg, value);
 
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, (v & 0x0F) > 0x0E); // same as (v & 0xF) + (1 & 0xF) > 0xF
+        self.set_flag(Flag::H, get_bit((reg_val & 0x0F) + 1, 0x10));
     }
 
     /// Adds one to the register pair, managing flags correctly.
     pub fn inc_register_pair(&mut self, pair: RegisterPair) {
-        let v = self.get_register_pair(pair).wrapping_add(1);
-        self.set_register_pair(pair, v);
+        let reg_val = self.get_register_pair(pair).wrapping_add(1);
+        self.set_register_pair(pair, reg_val);
     }
 
     /// Subtracts one from the register, managing flags correctly.
     pub fn dec_register(&mut self, reg: Register) {
-        let v = self.get_register(reg);
-        let value = v.wrapping_sub(1);
+        let reg_val = self.get_register(reg);
+        let value = reg_val.wrapping_sub(1);
         self.set_register(reg, value);
 
-        self.set_flag(Flag::Z, v == 0);
+        self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::N, true);
-        self.set_flag(Flag::H, (v & 0xF0) <= 0x10);
+        self.set_flag(Flag::H, get_bit((reg_val & 0x0F) - 1, 0x10));
     }
 
     /// Subtracts one to the register pair, managing flags correctly.
     pub fn dec_register_pair(&mut self, pair: RegisterPair) {
-        let v = self.get_register_pair(pair).wrapping_sub(1);
-        self.set_register_pair(pair, v);
+        let reg_val = self.get_register_pair(pair).wrapping_sub(1);
+        self.set_register_pair(pair, reg_val);
     }
 }

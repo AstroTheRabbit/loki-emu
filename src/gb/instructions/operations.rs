@@ -306,8 +306,8 @@ pub fn ADD_r16_r16(r16_1: RegisterPair, r16_2: RegisterPair) -> Instruction {
 /// Add the carry flag, and registers `r8_1` and `r8_2`, storing the result in `r8_1`.
 pub fn ADC_r8_r8(r8_1: Register, r8_2: Register) -> Instruction {
     Instruction::new(format!("ADC {:?}, {:?}", r8_1, r8_2), move |emu| {
-        let mut value = emu.cpu.get_register(r8_2) + emu.cpu.get_flag(Flag::C) as u8;
-        value = emu.cpu.add_register(r8_1, value);
+        let mut value = emu.cpu.get_register(r8_2);
+        value = emu.cpu.adc_register(r8_1, value);
         emu.cpu.set_register(r8_1, value);
         InstructionStep::Complete
     })
@@ -318,8 +318,8 @@ pub fn ADC_r8_r16(r8: Register, r16: RegisterPair) -> Instruction {
     Instruction::new(format!("ADC {:?}, ({:?})", r8, r16), move |_emu| {
         // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
-            let mut value = emu.read_r16(r16) + emu.cpu.get_flag(Flag::C) as u8;
-            value = emu.cpu.add_register(r8, value);
+            let mut value = emu.read_r16(r16);
+            value = emu.cpu.adc_register(r8, value);
             emu.cpu.set_register(r8, value);
             InstructionStep::Complete
         })
@@ -356,8 +356,8 @@ pub fn SUB_r8_r16(r8: Register, r16: RegisterPair) -> Instruction {
 /// Subtract the carry flag and register `r8_2` from register `r8_1`, storing the result in `r8_1`.
 pub fn SBC_r8_r8(r8_1: Register, r8_2: Register) -> Instruction {
     Instruction::new(format!("SBC {:?}, {:?}", r8_1, r8_2), move |emu| {
-        let mut value = emu.cpu.get_register(r8_2) + emu.cpu.get_flag(Flag::C) as u8;
-        value = emu.cpu.sub_register(r8_1, value);
+        let mut value = emu.cpu.get_register(r8_2);
+        value = emu.cpu.sbc_register(r8_1, value);
         emu.cpu.set_register(r8_1, value);
         InstructionStep::Complete
     })
@@ -368,8 +368,8 @@ pub fn SBC_r8_r16(r8: Register, r16: RegisterPair) -> Instruction {
     Instruction::new(format!("SBC {:?}, ({:?})", r8, r16), move |_emu| {
         // ? One bus read or write per m-cycle.
         InstructionStep::new(move |emu| {
-            let mut value = emu.read_r16(r16) + emu.cpu.get_flag(Flag::C) as u8;
-            value = emu.cpu.sub_register(r8, value);
+            let mut value = emu.read_r16(r16);
+            value = emu.cpu.sbc_register(r8, value);
             emu.cpu.set_register(r8, value);
             InstructionStep::Complete
         })
@@ -550,12 +550,13 @@ pub fn CALL_n16() -> Instruction {
             let lsb = emu.read_pc();
             InstructionStep::new(move |emu| {
                 let msb = emu.read_pc();
-                InstructionStep::new(move |_emu| {
-                    // ? "Branch decision?"
+                InstructionStep::new(move |emu| {
+                    let (pc_lsb, pc_msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
                     InstructionStep::new(move |emu| {
-                        emu.write_sp(msb);
+                        emu.write_sp(pc_msb);
                         InstructionStep::new(move |emu| {
-                            emu.write_sp(lsb);
+                            emu.write_sp(pc_lsb);
+                            emu.cpu.set_register_pair(RegisterPair::PC, join_u16(lsb, msb));
                             InstructionStep::Complete
                         })
                     })
@@ -574,12 +575,13 @@ pub fn CALL_c_n16(c: Flag) -> Instruction {
             InstructionStep::new(move |emu| {
                 let msb = emu.read_pc();
                 if emu.cpu.get_flag(c) {
-                    InstructionStep::new(move |_emu| {
-                        // ? "Branch decision?"
+                    InstructionStep::new(move |emu| {
+                        let (pc_lsb, pc_msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
                         InstructionStep::new(move |emu| {
-                            emu.write_sp(msb);
+                            emu.write_sp(pc_msb);
                             InstructionStep::new(move |emu| {
-                                emu.write_sp(lsb);
+                                emu.write_sp(pc_lsb);
+                                emu.cpu.set_register_pair(RegisterPair::PC, join_u16(lsb, msb));
                                 InstructionStep::Complete
                             })
                         })
@@ -601,12 +603,14 @@ pub fn CALL_nc_n16(c: Flag) -> Instruction {
             InstructionStep::new(move |emu| {
                 let msb = emu.read_pc();
                 if !emu.cpu.get_flag(c) {
-                    InstructionStep::new(move |_emu| {
-                        // ? "Branch decision?"
+                    InstructionStep::new(move |emu| {
+                        let (pc_lsb, pc_msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
                         InstructionStep::new(move |emu| {
-                            emu.write_sp(msb);
+                            emu.write_sp(pc_msb);
                             InstructionStep::new(move |emu| {
-                                emu.write_sp(lsb);
+                                emu.write_sp(pc_lsb);
+                                let new_pc = join_u16(lsb, msb);
+                                emu.cpu.set_register_pair(RegisterPair::PC, new_pc);
                                 InstructionStep::Complete
                             })
                         })

@@ -1,4 +1,4 @@
-use std::ops::BitOr;
+use std::ops::{BitAnd, BitOr};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum IME {
@@ -125,8 +125,8 @@ impl BitOr<InterruptMask> for u8 {
 
 /// Returns true if any of the bits of `mask` in `v` are true.
 #[inline]
-pub fn get_bit<M: Into<u8>>(v: u8, mask: M) -> bool {
-    v & mask.into() != 0
+pub fn get_bit<B: BitAnd<B, Output = B> + PartialEq + From<u8>, M: Into<B>>(v: B, mask: M) -> bool {
+    (v & mask.into()) != B::from(0)
 }
 
 /// Sets all bits of `v` in the `mask` to `state`.
