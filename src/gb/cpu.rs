@@ -97,10 +97,12 @@ impl CPU {
 
     pub fn set_register_pair(&mut self, pair: RegisterPair, value: u16) {
         match pair {
-            RegisterPair::AF => (self.f, self.a) = {
-                let (lsb, msb) = split_u16(value);
-                (lsb & 0xF0, msb)
-            },
+            RegisterPair::AF => {
+                (self.f, self.a) = {
+                    let (lsb, msb) = split_u16(value);
+                    (lsb & 0xF0, msb)
+                }
+            }
             RegisterPair::BC => (self.c, self.b) = split_u16(value),
             RegisterPair::DE => (self.e, self.d) = split_u16(value),
             RegisterPair::HL => (self.l, self.h) = split_u16(value),

@@ -8,13 +8,13 @@ fn jsmoo_instruction_tests() -> Result<(), Box<dyn std::error::Error>> {
         emu::GameboyEmulator,
         instructions::instructions::Instruction,
         io::{
-            graphics::{OAM, VRAM},
+            graphics::{OAM, PPU, VRAM},
             io_registers::IORegisters,
         },
         utils::*,
     };
     use serde::Deserialize;
-    use std::fs;
+    use std::{fs, time::Instant};
 
     #[derive(Debug, Deserialize)]
     struct JsmooTest {
@@ -42,7 +42,9 @@ fn jsmoo_instruction_tests() -> Result<(), Box<dyn std::error::Error>> {
     impl From<&JsmooTestState> for GameboyEmulator {
         fn from(value: &JsmooTestState) -> Self {
             let mut emu = Self {
+                prev_update: Instant::now(),
                 cpu: CPU::from(value),
+                ppu: PPU::new_init(),
                 ime: IME::Disabled,
                 bus: Bus {
                     cartridge: Cartridge::new_empty(),

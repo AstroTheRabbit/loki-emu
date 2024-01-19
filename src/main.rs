@@ -2,8 +2,9 @@
 pub mod byte_field;
 pub mod gb;
 
-use std::{num::NonZeroU32, rc::Rc};
+use std::{num::NonZeroU32, rc::Rc, time::Instant};
 
+use gb::io::graphics::PPU;
 use softbuffer::{Buffer, Context, Surface};
 use winit::{
     dpi::PhysicalSize,
@@ -46,7 +47,9 @@ fn main() -> Result<(), EventLoopError> {
     let mut input = WinitInputHelper::new();
 
     let mut emu = GameboyEmulator {
+        prev_update: Instant::now(),
         cpu: CPU::new_init(),
+        ppu: PPU::new_init(),
         ime: IME::Disabled,
         is_halted: false,
         bus: Bus {
@@ -59,6 +62,8 @@ fn main() -> Result<(), EventLoopError> {
         io_registers: IORegisters::new(),
         current_instruction: Instruction::default(),
     };
+
+    Bus::write(&mut emu, 0xFF44, 0x90);
 
     if let Ok(title) = emu.bus.cartridge.get_title() {
         window.set_title(format!("Loki Emulator - {title}").as_str());
@@ -86,7 +91,7 @@ fn main() -> Result<(), EventLoopError> {
                 .unwrap();
 
             let mut buffer = surface.buffer_mut().unwrap();
-            emu.update(window.clone(), &mut input, &mut buffer);
+            emu.update(&mut input, window.clone(), &mut buffer);
             buffer.present().unwrap();
         }
     })

@@ -565,8 +565,10 @@ impl From<u8> for Instruction {
                         let reg_val = emu.cpu.get_register_pair(RegisterPair::SP);
                         let value = reg_val.wrapping_add(v);
                         emu.cpu.set_flag(Flag::Z | Flag::N, false);
-                        emu.cpu.set_flag(Flag::H, get_bit((reg_val & 0xF) + (v & 0xF), 0x10u16));
-                        emu.cpu.set_flag(Flag::C, get_bit((reg_val & 0xFF) + (v & 0xFF), 0x100u16));
+                        emu.cpu
+                            .set_flag(Flag::H, get_bit((reg_val & 0xF) + (v & 0xF), 0x10u16));
+                        emu.cpu
+                            .set_flag(Flag::C, get_bit((reg_val & 0xFF) + (v & 0xFF), 0x100u16));
 
                         InstructionStep::new(move |emu| {
                             emu.cpu.set_register_pair(RegisterPair::SP, value);
@@ -656,8 +658,10 @@ impl From<u8> for Instruction {
                         let reg_val = emu.cpu.get_register_pair(RegisterPair::SP);
                         let value = reg_val.wrapping_add(v);
                         emu.cpu.set_flag(Flag::Z | Flag::N, false);
-                        emu.cpu.set_flag(Flag::H, get_bit((reg_val & 0xF) + (v & 0xF), 0x10u16));
-                        emu.cpu.set_flag(Flag::C, get_bit((reg_val & 0xFF) + (v & 0xFF), 0x100u16));
+                        emu.cpu
+                            .set_flag(Flag::H, get_bit((reg_val & 0xF) + (v & 0xF), 0x10u16));
+                        emu.cpu
+                            .set_flag(Flag::C, get_bit((reg_val & 0xFF) + (v & 0xFF), 0x100u16));
                         emu.cpu.set_register_pair(RegisterPair::HL, value);
                         InstructionStep::Complete
                     })

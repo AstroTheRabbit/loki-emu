@@ -77,24 +77,49 @@ impl BitOr<Flag> for u8 {
     }
 }
 
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
+#[derive(Debug, Clone, Copy)]
 pub enum InterruptMask {
     VBlank,
-    LCD_STAT,
+    LCDStat,
     Timer,
     Serial,
     Joypad,
+}
+impl InterruptMask {
+    pub fn get_handler_address(&self) -> u16 {
+        match self {
+            InterruptMask::VBlank => 0x0040,
+            InterruptMask::LCDStat => 0x0048,
+            InterruptMask::Timer => 0x0050,
+            InterruptMask::Serial => 0x0058,
+            InterruptMask::Joypad => 0x0060,
+        }
+    }
+
+    pub fn get_interrupt_from_register(register: u8) -> Option<Self> {
+        for interrupt in [
+            Self::VBlank,
+            Self::LCDStat,
+            Self::Timer,
+            Self::Serial,
+            Self::Joypad,
+        ] {
+            if get_bit(register, interrupt) {
+                return Some(interrupt);
+            }
+        }
+        return None;
+    }
 }
 
 impl From<InterruptMask> for u8 {
     fn from(value: InterruptMask) -> Self {
         match value {
-            InterruptMask::VBlank => 0b0000_0001,
-            InterruptMask::LCD_STAT => 0b0000_0010,
-            InterruptMask::Timer => 0b0000_0100,
-            InterruptMask::Serial => 0b0000_1000,
-            InterruptMask::Joypad => 0b0001_0000,
+            InterruptMask::VBlank  => 0b0000_0001,
+            InterruptMask::LCDStat => 0b0000_0010,
+            InterruptMask::Timer   => 0b0000_0100,
+            InterruptMask::Serial  => 0b0000_1000,
+            InterruptMask::Joypad  => 0b0001_0000,
         }
     }
 }

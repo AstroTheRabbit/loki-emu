@@ -556,7 +556,8 @@ pub fn CALL_n16() -> Instruction {
                         emu.write_sp(pc_msb);
                         InstructionStep::new(move |emu| {
                             emu.write_sp(pc_lsb);
-                            emu.cpu.set_register_pair(RegisterPair::PC, join_u16(lsb, msb));
+                            emu.cpu
+                                .set_register_pair(RegisterPair::PC, join_u16(lsb, msb));
                             InstructionStep::Complete
                         })
                     })
@@ -576,12 +577,14 @@ pub fn CALL_c_n16(c: Flag) -> Instruction {
                 let msb = emu.read_pc();
                 if emu.cpu.get_flag(c) {
                     InstructionStep::new(move |emu| {
-                        let (pc_lsb, pc_msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
+                        let (pc_lsb, pc_msb) =
+                            split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
                         InstructionStep::new(move |emu| {
                             emu.write_sp(pc_msb);
                             InstructionStep::new(move |emu| {
                                 emu.write_sp(pc_lsb);
-                                emu.cpu.set_register_pair(RegisterPair::PC, join_u16(lsb, msb));
+                                emu.cpu
+                                    .set_register_pair(RegisterPair::PC, join_u16(lsb, msb));
                                 InstructionStep::Complete
                             })
                         })
@@ -604,7 +607,8 @@ pub fn CALL_nc_n16(c: Flag) -> Instruction {
                 let msb = emu.read_pc();
                 if !emu.cpu.get_flag(c) {
                     InstructionStep::new(move |emu| {
-                        let (pc_lsb, pc_msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
+                        let (pc_lsb, pc_msb) =
+                            split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
                         InstructionStep::new(move |emu| {
                             emu.write_sp(pc_msb);
                             InstructionStep::new(move |emu| {
@@ -670,6 +674,28 @@ pub fn POP_r16(r16: RegisterPair) -> Instruction {
                 let msb = emu.read_sp();
                 emu.cpu.set_register_pair(r16, join_u16(lsb, msb));
                 InstructionStep::Complete
+            })
+        })
+    })
+}
+
+// * Interrupt handling
+
+pub fn INTERRUPT(interrupt: InterruptMask) -> Instruction {
+    Instruction::new(format!("INTERRUPT {:?}", interrupt), move |_emu| {
+        // ? "2 machine cycles pass while nothing occurs, presumably the CPU is executing NOPs during this time."
+        InstructionStep::new(move |emu| {
+            let (pc_lsb, pc_msb) = split_u16(emu.cpu.get_register_pair(RegisterPair::PC));
+            InstructionStep::new(move |emu| {
+                emu.write_sp(pc_msb);
+                InstructionStep::new(move |emu| {
+                    emu.write_sp(pc_lsb);
+                    InstructionStep::new(move |emu| {
+                        emu.cpu
+                            .set_register_pair(RegisterPair::PC, interrupt.get_handler_address());
+                        InstructionStep::Complete
+                    })
+                })
             })
         })
     })

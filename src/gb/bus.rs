@@ -1,13 +1,10 @@
-#[allow(unused_imports)]
 use super::{
     cartridge::Cartridge,
     emu::GameboyEmulator,
-    io::{
-        graphics::{OAM, VRAM},
-        io_registers::IORegisters,
-    },
-    utils::join_u16,
+    io::graphics::{OAM, VRAM},
 };
+#[cfg(not(test))]
+use super::{io::io_registers::IORegisters, utils::join_u16};
 use crate::byte_field;
 
 #[cfg(not(test))]

@@ -32,13 +32,13 @@ impl IORegisters {
 
     /// Updates timers and I/O as if 4 t-cycles have passed.
     pub fn update(emu: &mut GameboyEmulator, input: &mut WinitInputHelper) {
-        emu.io_registers.joypad.update(input);
+        JoypadRegisters::update(emu, input);
         TimerRegisters::update(emu);
     }
 
     pub fn read(emu: &mut GameboyEmulator, index: usize) -> u8 {
         match index {
-            0x0000 => emu.io_registers.joypad.read(),
+            0x0000 => emu.io_registers.joypad.input_state | 0b1100_0000,
             0x0001 => todo!("GB - IO: Serial byte"),
             0x0002 => todo!("GB - IO: Serial control"),
             0x0003 => unimplemented!("GB - IO: Unmapped"),

@@ -65,6 +65,7 @@ impl TimerRegisters {
                         let (tima, tima_overflow) = emu.io_registers.timer.TIMA.overflowing_add(1);
                         emu.io_registers.timer.TIMA = tima;
                         if tima_overflow {
+                            emu.set_interrupt_flag(InterruptMask::Timer, true);
                             emu.io_registers.timer.TIMA_overflow_state =
                                 TIMAOverflowState::Overflowed { cycles: 0 };
                         }

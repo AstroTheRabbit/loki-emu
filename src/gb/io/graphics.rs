@@ -1,8 +1,13 @@
 #![allow(non_snake_case)]
 
+use std::rc::Rc;
+
+use winit::window::Window;
+
 use crate::{
     byte_field,
     gb::{bus::Bus, emu::GameboyEmulator, utils::join_u16},
+    RenderBuffer,
 };
 
 // ? Original color scheme
@@ -131,5 +136,21 @@ impl GraphicsRegisters {
     pub fn write_DMA(emu: &mut GameboyEmulator, value: u8) {
         emu.io_registers.graphics.DMA = value;
         emu.io_registers.graphics.DMA_transfer_progress = Some(0);
+    }
+}
+
+#[derive(Debug)]
+pub struct PPU {}
+
+impl PPU {
+    pub fn new_init() -> Self {
+        Self {}
+    }
+
+    /// Step the rendering process as if 4 t-cycles have passed.
+    pub fn render_step(emu: &mut GameboyEmulator, buffer: &mut RenderBuffer) {
+        for _ in 0..4 {
+            // TODO: Scanline rendering
+        }
     }
 }
